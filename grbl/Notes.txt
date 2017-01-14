@@ -1,0 +1,78 @@
+NEW BIT AND MASK MACROS IN NUTS AND BOLTS
+// Bit field and masking macros
+<!--  Replace with individual BIT_0 01, BIT_1 02, BIT_2 04, etc for all 32bits  --!>
+#define bit(n) (1 << n) 
+<!--  Replace with bitband region  --!>
+<!--  Create Macro for bitband(word, bit)  --!>
+#define bit_true_atomic(x,mask) {uint8_t sreg = SREG; cli(); (x) |= (mask); SREG = sreg; }
+#define bit_false_atomic(x,mask) {uint8_t sreg = SREG; cli(); (x) &= ~(mask); SREG = sreg; }
+#define bit_toggle_atomic(x,mask) {uint8_t sreg = SREG; cli(); (x) ^= (mask); SREG = sreg; }
+#define bit_true(x,mask) (x) |= (mask)
+#define bit_false(x,mask) (x) &= ~(mask)
+#define bit_istrue(x,mask) ((x & mask) != 0)
+#define bit_isfalse(x,mask) ((x & mask) == 0)
+
+//GPIO pins function completely differently with StellarisWare
+//Both the .h and .c files need to be totally rewritten
+//Create new files for the following hardware abstractions:
+coolant_control
+eeprom
+limits
+//probe state monitor could be refactored into motion control and eeprom using a new eeprom function for capturing probe positon
+probe
+//Refactor into buffer.h and serial.h
+//serial.h will just have Init functions and ISRs for tx and rx
+serial
+//create compile time option for FM spindle control
+//constants for SPINDLE_REF_RPM and SPINDLE_REF_PULSE_FREQ
+spindle_control
+//TI complier complained about whitespace after backslash in velocity diagrams
+//initially only rewrite timer init/config/start/stop and ISR functions
+stepper
+//the operator panel pins and pin change interrupts should be refactored into a separate operator.h
+System
+
+Missing Defines
+#define M_PI 3.141592653589793238462643
+#define _delay_ms  <!--  come up with something clever  --!>
+#define _delay_us  <!--  come up with something clever  --!>
+
+
+TODO: Look at datasheet and decide on pins for the following functions:
+Flood Coolant Enable
+Mist Coolant Enable
+Spindle Direction
+Spindle Enable
+
+//minimum function for PF525
+//connect to npn transistors in cabinet for inputs TO drive
+//connect to pnp transistors with 3.3v collector for output FROM drive
+1 Enable
+2 Direction
+3 0V Common
+4 At Speed
+
+
+
+
+//Simplest solution for spindle may be an MSP430 with a breakout booster
+//Connect to main cabinet with 5v/gnd/tx/rx/shield
+Spindle IO Connections to PF525:
+SAFETY:
+1 ChA
+2 ChB
+3 Safe+24
+CONTROL:
+4 Run
+5 Direction
+REFERENCE:
+6 Pulse Train (dc sinking output from mcu)
+FEEDBACK:
+7 4-20ma Current Feedback
+8 Analog Common
+STATUS:
+9 Safety Ready
+10 At Speed
+POWER:
+11 0V Common (Drive has Sourcing inputs, sourcing outputs)
+12 +24V Common

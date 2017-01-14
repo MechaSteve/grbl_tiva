@@ -1,0 +1,12 @@
+*.hex
+*.o
+*.elf
+*.DS_Store
+*.d
+Debug/
+Release/
+*xdchelp
+config/
+launches/
+
+README.md
