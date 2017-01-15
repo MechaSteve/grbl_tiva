@@ -12,6 +12,19 @@ NEW BIT AND MASK MACROS IN NUTS AND BOLTS
 #define bit_istrue(x,mask) ((x & mask) != 0)
 #define bit_isfalse(x,mask) ((x & mask) == 0)
 
+//better single point of truth if macros are defined for things like 
+//#define SPINDLE_DIRECTION_ON()	{SPINDLE_DIRECTION_DATA |= (SPINDLE_DIRECTION_PIN);}
+//#define SPINDLE_DIRECTION_OFF()	{SPINDLE_DIRECTION_DATA &= ~(SPINDLE_DIRECTION_PIN);}
+
+//It is critical that the GPIO pins are abstracted into logical data structures
+//i.e. 
+//RESET - Port F, Pin 0
+//CYCLE_START - Port F, Pin 4
+//SAFETY - Port E, Pin 3
+//HOLD - Port E, Pin 4
+//
+//ControlWord - |byte|byte|byte|0|0|0|0|Hold|Safety|CycStart|Reset|
+
 //GPIO pins function completely differently with StellarisWare
 //Both the .h and .c files need to be totally rewritten
 //Create new files for the following hardware abstractions:
@@ -20,6 +33,10 @@ eeprom
 limits
 //probe state monitor could be refactored into motion control and eeprom using a new eeprom function for capturing probe positon
 probe
+//get_direction_pin_mask will need to be reworked, as do all places where it is used
+//this should become a set of flags that are used to decide how to set the actual
+//GPIO pin
+settings
 //Refactor into buffer.h and serial.h
 //serial.h will just have Init functions and ISRs for tx and rx
 serial
@@ -28,9 +45,13 @@ serial
 spindle_control
 //TI complier complained about whitespace after backslash in velocity diagrams
 //initially only rewrite timer init/config/start/stop and ISR functions
+//direction Pins must be written to individually (on multiple ports)
 stepper
 //the operator panel pins and pin change interrupts should be refactored into a separate operator.h
 System
+
+
+
 
 Missing Defines
 #define M_PI 3.141592653589793238462643
@@ -48,7 +69,7 @@ Spindle Enable
 //connect to npn transistors in cabinet for inputs TO drive
 //connect to pnp transistors with 3.3v collector for output FROM drive
 1 Enable
-2 Direction
+2 Direction / Pulse
 3 0V Common
 4 At Speed
 

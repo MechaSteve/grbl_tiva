@@ -54,7 +54,23 @@ extern uint32_t __STACK_TOP;
 // External declarations for the interrupt handlers used by the application.
 //
 //*****************************************************************************
-// To be added by user
+extern void Timer0IntHandler(void);
+extern void Timer1IntHandler(void);
+
+//extern void GPIOAIntHandler(void);
+//extern void GPIOBIntHandler(void);
+//extern void GPIOCIntHandler(void);
+extern void GPIODIntHandler(void);
+//extern void GPIOEIntHandler(void);
+//extern void GPIOFIntHandler(void);
+
+extern void WTimer0AIntHandler(void);
+extern void WTimer0BIntHandler(void);
+extern void WTimer1AIntHandler(void);
+extern void WTimer1BIntHandler(void);
+
+extern void SerialRxIntHandler(void);
+extern void SerialTxIntHandler(void);
 
 //*****************************************************************************
 //

@@ -39,6 +39,7 @@
 
 #ifdef CPU_MAP_LM4F120H5QR // (Stellaris Launchpad)
   #include "cpu_map/cpu_map_lm4f120h5qr.h"
+  #include "inc/lm4f120h5qr.h"
 #endif
 
 #ifdef CPU_MAP_TM4C123G  // (Tiva C Launchpad)
