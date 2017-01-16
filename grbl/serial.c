@@ -20,6 +20,7 @@
 */
 
 #include "grbl.h"
+#include "driverlib/uart.h"
 
 #define RX_RING_BUFFER (RX_BUFFER_SIZE+1)
 #define TX_RING_BUFFER (TX_BUFFER_SIZE+1)
@@ -64,21 +65,32 @@ uint8_t serial_get_tx_buffer_count()
 
 void serial_init()
 {
-  // Set baud rate
-  #if BAUD_RATE < 57600
-    uint16_t UBRR0_value = ((F_CPU / (8L * BAUD_RATE)) - 1)/2 ;
-    UCSR0A &= ~(1 << U2X0); // baud doubler off  - Only needed on Uno XXX
-  #else
-    uint16_t UBRR0_value = ((F_CPU / (4L * BAUD_RATE)) - 1)/2;
-    UCSR0A |= (1 << U2X0);  // baud doubler on for high baud rates, i.e. 115200
-  #endif
-  UBRR0H = UBRR0_value >> 8;
-  UBRR0L = UBRR0_value;
+	//
+	// Enable the UART peripheral.
+	//
+	SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
 
-  // enable rx, tx, and interrupt on complete reception of a byte
-  UCSR0B |= (1<<RXEN0 | 1<<TXEN0 | 1<<RXCIE0);
+	//
+	// Set GPIO A0 and A1 as UART pins.
+	//
+	GPIOPinConfigure(GPIO_PA0_U0RX);
+	GPIOPinConfigure(GPIO_PA1_U0TX);
+	GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
 
-  // defaults to 8-bit, no parity, 1 stop bit
+	//
+	// Configure the UART for 115,200, 8-N-1 operation.
+	// Do not use FIFO, maintain atmega functionality
+	//
+	UARTFIFODisable(UART0_BASE);
+	UARTConfigSetExpClk(UART0_BASE, ROM_SysCtlClockGet(), 115200,
+							(UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE |
+							 UART_CONFIG_PAR_NONE));
+
+	//
+	// Enable the UART interrupt.
+	//
+	IntEnable(INT_UART0);
+	UARTIntEnable(UART0_BASE, UART_INT_RX | UART_INT_TX);
 }
 
 
@@ -99,17 +111,19 @@ void serial_write(uint8_t data) {
   serial_tx_buffer_head = next_head;
 
   // Enable Data Register Empty Interrupt to make sure tx-streaming is running
-  UCSR0B |=  (1 << UDRIE0);
+  IntEnable(INT_UART0);
+  UARTIntEnable(UART0_BASE, UART_INT_TX);
 }
 
 
-// Data Register Empty Interrupt handler
-ISR(SERIAL_UDRE)
+// Data Register Empty Interrupt (Event) handler
+void OnSerialTxEmpty(void)
 {
   uint8_t tail = serial_tx_buffer_tail; // Temporary serial_tx_buffer_tail (to optimize for volatile)
 
   // Send a byte from the buffer
-  UDR0 = serial_tx_buffer[tail];
+  //UDR0 = serial_tx_buffer[tail];
+  UARTCharPut(UART0_BASE, serial_tx_buffer[tail]);
 
   // Update tail position
   tail++;
@@ -118,7 +132,8 @@ ISR(SERIAL_UDRE)
   serial_tx_buffer_tail = tail;
 
   // Turn off Data Register Empty Interrupt to stop tx-streaming if this concludes the transfer
-  if (tail == serial_tx_buffer_head) { UCSR0B &= ~(1 << UDRIE0); }
+  //if (tail == serial_tx_buffer_head) { UCSR0B &= ~(1 << UDRIE0); }
+  if (tail == serial_tx_buffer_head) { UARTIntDisable(UART0_BASE, UART_INT_TX); }
 }
 
 
@@ -139,10 +154,9 @@ uint8_t serial_read()
   }
 }
 
-
-ISR(SERIAL_RX)
+// Data available interrupt (event) handler
+void OnSerialRx(uint8_t data)
 {
-  uint8_t data = UDR0;
   uint8_t next_head;
 
   // Pick off realtime command characters directly from the serial stream. These characters are

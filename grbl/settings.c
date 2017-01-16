@@ -315,13 +315,21 @@ void settings_init() {
   }
 }
 
+// Create General Purpose Axis Mask
+// Returns axis bit mask according to Grbl internal axis indexing.
+uint8_t get_axis_mask(uint8_t axis_idx)
+{
+  if ( axis_idx == X_AXIS ) { return(X_AXIS_MASK); }
+  if ( axis_idx == Y_AXIS ) { return(Y_AXIS_MASK); }
+  return(Z_AXIS_MASK);
+}
 
 // Returns step pin mask according to Grbl internal axis indexing.
 uint8_t get_step_pin_mask(uint8_t axis_idx)
 {
-  if ( axis_idx == X_AXIS ) { return((1<<X_STEP_BIT)); }
-  if ( axis_idx == Y_AXIS ) { return((1<<Y_STEP_BIT)); }
-  return((1<<Z_STEP_BIT));
+  if ( axis_idx == X_AXIS ) { return(X_STEP_MASK); }
+  if ( axis_idx == Y_AXIS ) { return(Y_STEP_MASK); }
+  return(Z_STEP_MASK);
 }
 
 // Returns direction pin mask according to Grbl internal axis indexing.

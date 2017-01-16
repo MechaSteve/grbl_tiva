@@ -106,7 +106,7 @@ uint8_t limits_get_state()
 // your e-stop switch to the Arduino reset pin, since it is the most correct way to do this.
 #ifndef ENABLE_SOFTWARE_DEBOUNCE
 //  ISR(LIMIT_INT_vect) // DEFAULT: Limit pin change interrupt process.
-void GPIODIntHandler(void) //Limit switches are all on port D
+void OnLimitEvent(void)
   {
     // Ignore limit switches if already in an alarm state or in-process of executing an alarm.
     // When in the alarm state, Grbl should have been reset or will force a reset, so any pending
@@ -127,7 +127,6 @@ void GPIODIntHandler(void) //Limit switches are all on port D
         #endif
       }
     }
-    GPIOPinIntClear(LIMIT_BASE, LIMIT_MASK); //We check all pins, so clear all the interrupts
   }
 #else // OPTIONAL: Software debounce limit pin routine.
   // Upon limit pin change, enable watchdog timer to create a short delay. 

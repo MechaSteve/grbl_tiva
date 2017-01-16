@@ -34,6 +34,12 @@
 #define Z_AXIS 2
 // #define A_AXIS 3
 
+// Axis bit masks for passing bit fields
+#define X_AXIS_MASK		1
+#define Y_AXIS_MASK		2
+#define Z_AXIS_MASK		4
+//#define A_AXIS_MASK		8
+
 // CoreXY motor assignments. DO NOT ALTER.
 // NOTE: If the A and B motor axis bindings are changed, this effects the CoreXY equations.
 #ifdef COREXY
@@ -44,7 +50,7 @@
 // Conversions
 #define MM_PER_INCH (25.40)
 #define INCH_PER_MM (0.0393701)
-#define TICKS_PER_MICROSECOND (F_CPU/1000000)
+#define TICKS_PER_MICROSECOND (SysCtlClockGet()/1000000)
 
 #define DELAY_MODE_DWELL       0
 #define DELAY_MODE_SYS_SUSPEND 1

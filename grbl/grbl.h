@@ -32,6 +32,7 @@
 //#include <avr/wdt.h>
 //#include <util/delay.h>
 
+
 //TI Stellaris/Tiva ware Libraries
 #define TARGET_IS_BLIZZARD_RA1
 #include "inc/lm4f120h5qr.h"
@@ -40,6 +41,7 @@
 #include "inc/hw_nvic.h"
 #include "inc/hw_types.h"
 #include "driverlib/debug.h"
+#include <driverlib/eeprom.h>
 #include "driverlib/fpu.h"
 #include "driverlib/gpio.h"
 #include "driverlib/interrupt.h"
@@ -47,6 +49,7 @@
 #include "driverlib/rom.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/systick.h"
+#include "driverlib/timer.h"
 #include "utils/uartstdio.h"
 
 //standard enough C libraries
@@ -66,10 +69,13 @@
 #include "cpu_map.h"
 #include "planner.h"
 #include "coolant_control.h"
-#include "eeprom.h"
+#include "eeprom_io.h"
 #include "gcode.h"
+#include "handlers.h"
+#include "inputs.h"
 #include "limits.h"
 #include "motion_control.h"
+#include "outputs.h"
 #include "planner.h"
 #include "print.h"
 #include "probe.h"

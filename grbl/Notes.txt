@@ -37,33 +37,83 @@ probe
 //this should become a set of flags that are used to decide how to set the actual
 //GPIO pin
 settings
-//Refactor into buffer.h and serial.h
-//serial.h will just have Init functions and ISRs for tx and rx
+//Refactor into serial_buffer.h and serial_com.h
+//serial_com.h will just have Init functions, interrupt enable/disable, and get/put functions
+//serial_buffer will be called by the main program and manage the buffer
+// it will also contain event handlers for tx and rx interrupts
+//future improvements should allow for larger buffer and Tx/Rx FIFO function
 serial
 //create compile time option for FM spindle control
 //constants for SPINDLE_REF_RPM and SPINDLE_REF_PULSE_FREQ
+//create separate file for spindle_io.h
 spindle_control
 //TI complier complained about whitespace after backslash in velocity diagrams
 //initially only rewrite timer init/config/start/stop and ISR functions
 //direction Pins must be written to individually (on multiple ports)
+//this should be written so the external interface does not expose hardware
+// or particular implementation.
 stepper
 //the operator panel pins and pin change interrupts should be refactored into a separate operator.h
 System
 
+//create inputs.h and outputs.h for:
+// Limit switches (inputs)
+//		LimitInputsInit()
+//		long LimitInputsGet()
+//		LimitIntConfig()
+//		LimitIntEnable()
+//		LimitIntDisable()
+//		long LimitIntStatus()
+//		LimitIntClear()
+// Probe switches (inputs)
+//		*same as limits
+// Safety Circuit (inputs)
+/		*same as limits
+// Operator Buttons (inputs)
+//		*same as limits
+// Axis Enable and Direction (outputs)
+//		AxisEnDirInit()
+//		AxisEnable()
+//		AxisDisable()
+//		AxisForward(AXIS_N)
+//		AxisReverse(AXIS_N)
+// Spindle En and Dir (outputs)
+//		SpindleOutputsInit()
+//		SpindleOutputsCW()
+//		SpindleOutputsCCW()
+//		SpindleOutputsStop()
+// Spindle Ref (outputs) - PWM or FM control
+//		SpindleRefInit()
+//		SpindleRefSet(long)
+// Spindle AtRef (inputs)
+//		SpindleInputsInit()
+//		tboolean SpindleAtRefGet()
+// Spindle Feedback (inputs) - Analog input
+//		SpindleFeedbackInit()
+//		SpindleIntConfig()
+//		SpindleIntEnable()
+//		SpindleIntDisable()
+//		SpindleIntStatus()
+//		SpindleIntClear()
+//		OnSpindleEvent()   // read feedback or educated guessing with a timer
+//		long SpindleFeedbackGet()
+// Coolant Flood and Mist (outputs)
+//		*same as spindle outputs
 
 
 
 Missing Defines
-#define M_PI 3.141592653589793238462643
 #define _delay_ms  <!--  come up with something clever  --!>
 #define _delay_us  <!--  come up with something clever  --!>
+coolant_get_state
+coolant_sync
+InputOperatorIntConfig
+pgm_read_byte_near
+PSTR
+sei
+st_parking_restore_buffer
+st_parking_setup_buffer
 
-
-TODO: Look at datasheet and decide on pins for the following functions:
-Flood Coolant Enable
-Mist Coolant Enable
-Spindle Direction
-Spindle Enable
 
 //minimum function for PF525
 //connect to npn transistors in cabinet for inputs TO drive

@@ -13,9 +13,8 @@
 *                         $Revision: 0.1 $
 *                         $Date: Saturday, January 14, 2017 06:19 PM EST $
 ****************************************************************************/
-#include "inc/hw_types.h"
+#include "grbl.h"
 #include "driverlib/eeprom.h"
-#include "driverlib/interrupt.h"
 
 
 /*! \brief  Read byte from EEPROM.
@@ -32,9 +31,10 @@ unsigned char eeprom_get_char( unsigned int addr )
 	unsigned long wordOffset = addr >> 2;
 	unsigned long byteShift = (addr & 3) * 8;
 	unsigned long readData = 0;
+	unsigned long count = 4;
 
 	//EEPROMRead(unsigned long *pulData, unsigned long ulAddress, unsigned long ulCount)
-	EEPROMRead(&readData, (wordOffset<<2), 4);
+	EEPROMRead(&readData, (wordOffset<<2), count);
 
 	return (char)(readData>>byteShift);
 }
@@ -64,13 +64,14 @@ void eeprom_put_char( unsigned int addr, unsigned char new_value )
 	unsigned long writeData = (unsigned long)new_value << byteShift;
 	unsigned long old_value = 0;
 	unsigned long writeSuccess = 0;
+	unsigned long count = 4;
 
 	//read EEPROM Word
-	EEPROMRead(&old_value, (wordOffset<<2), 4);
+	EEPROMRead(&old_value, (wordOffset<<2), count);
 	//Compose new word
 	writeData |= (old_value & ~(0x000000FF<<byteShift));
 	//write back to EEPROM
-	writeSuccess = EEPROMProgram(&writeData, (wordOffset<<2), 4);
+	writeSuccess = EEPROMProgram(&writeData, (wordOffset<<2), count);
 }
 
 

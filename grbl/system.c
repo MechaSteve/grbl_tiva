@@ -23,14 +23,10 @@
 
 void system_init()
 {
-  CONTROL_DDR &= ~(CONTROL_MASK); // Configure as input pins
-  #ifdef DISABLE_CONTROL_PIN_PULL_UP
-    CONTROL_PORT &= ~(CONTROL_MASK); // Normal low operation. Requires external pull-down.
-  #else
-    CONTROL_PORT |= CONTROL_MASK;   // Enable internal pull-up resistors. Normal high operation.
-  #endif
-  CONTROL_PCMSK |= CONTROL_MASK;  // Enable specific pins of the Pin Change Interrupt
-  PCICR |= (1 << CONTROL_INT);   // Enable Pin Change Interrupt
+	InputResetInit();
+	InputFeedHoldInit();
+	InputCycleStartInit();
+	InputOperatorIntConfig();
 }
 
 
@@ -40,7 +36,7 @@ void system_init()
 uint8_t system_control_get_state()
 {
   uint8_t control_state = 0;
-  uint8_t pin = (CONTROL_PIN & CONTROL_MASK);
+  uint8_t pin = ( InputResetGet() | InputFeedHoldGet() | InputCycleStartGet() );
   #ifdef INVERT_CONTROL_PIN_MASK
     pin ^= INVERT_CONTROL_PIN_MASK;
   #endif
@@ -48,9 +44,9 @@ uint8_t system_control_get_state()
     #ifdef ENABLE_SAFETY_DOOR_INPUT_PIN
       if (bit_isfalse(pin,(1<<CONTROL_SAFETY_DOOR_BIT))) { control_state |= CONTROL_PIN_INDEX_SAFETY_DOOR; }
     #endif
-    if (bit_isfalse(pin,(1<<CONTROL_RESET_BIT))) { control_state |= CONTROL_PIN_INDEX_RESET; }
-    if (bit_isfalse(pin,(1<<CONTROL_FEED_HOLD_BIT))) { control_state |= CONTROL_PIN_INDEX_FEED_HOLD; }
-    if (bit_isfalse(pin,(1<<CONTROL_CYCLE_START_BIT))) { control_state |= CONTROL_PIN_INDEX_CYCLE_START; }
+    if (InputResetGet()) { control_state |= CONTROL_PIN_INDEX_RESET; }
+    if (InputFeedHoldGet()) { control_state |= CONTROL_PIN_INDEX_FEED_HOLD; }
+    if (InputCycleStartGet()) { control_state |= CONTROL_PIN_INDEX_CYCLE_START; }
   }
   return(control_state);
 }
@@ -351,57 +347,57 @@ uint8_t system_check_travel_limits(float *target)
 
 // Special handlers for setting and clearing Grbl's real-time execution flags.
 void system_set_exec_state_flag(uint8_t mask) {
-  uint8_t sreg = SREG;
-  cli();
+  //uint8_t sreg = SREG;
+  //cli();
   sys_rt_exec_state |= (mask);
-  SREG = sreg;
+  //SREG = sreg;
 }
 
 void system_clear_exec_state_flag(uint8_t mask) {
-  uint8_t sreg = SREG;
-  cli();
+  //uint8_t sreg = SREG;
+  //cli();
   sys_rt_exec_state &= ~(mask);
-  SREG = sreg;
+  //SREG = sreg;
 }
 
 void system_set_exec_alarm(uint8_t code) {
-  uint8_t sreg = SREG;
-  cli();
+  //uint8_t sreg = SREG;
+  //cli();
   sys_rt_exec_alarm = code;
-  SREG = sreg;
+  //SREG = sreg;
 }
 
 void system_clear_exec_alarm() {
-  uint8_t sreg = SREG;
-  cli();
+  //uint8_t sreg = SREG;
+  //cli();
   sys_rt_exec_alarm = 0;
-  SREG = sreg;
+  //SREG = sreg;
 }
 
 void system_set_exec_motion_override_flag(uint8_t mask) {
-  uint8_t sreg = SREG;
-  cli();
+  //uint8_t sreg = SREG;
+  //cli();
   sys_rt_exec_motion_override |= (mask);
-  SREG = sreg;
+  //SREG = sreg;
 }
 
 void system_set_exec_accessory_override_flag(uint8_t mask) {
-  uint8_t sreg = SREG;
-  cli();
+  //uint8_t sreg = SREG;
+  //cli();
   sys_rt_exec_accessory_override |= (mask);
-  SREG = sreg;
+  //SREG = sreg;
 }
 
 void system_clear_exec_motion_overrides() {
-  uint8_t sreg = SREG;
-  cli();
+  //uint8_t sreg = SREG;
+  //cli();
   sys_rt_exec_motion_override = 0;
-  SREG = sreg;
+  //SREG = sreg;
 }
 
 void system_clear_exec_accessory_overrides() {
-  uint8_t sreg = SREG;
-  cli();
+  //uint8_t sreg = SREG;
+  //cli();
   sys_rt_exec_accessory_override = 0;
-  SREG = sreg;
+  //SREG = sreg;
 }

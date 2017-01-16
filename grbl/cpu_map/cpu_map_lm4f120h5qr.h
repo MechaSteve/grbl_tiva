@@ -48,7 +48,7 @@
 // PD3 - A Axis Limit Switches
 // PE2 - Emergency Stop 1 / Feed Hold / Safety Door
 // PE3 - Emergency Stop 2 / Probe
-// PB5 - Spindle PulseOut
+// ( PB5 - Spindle PulseOut !not on CNC Breakout!)
 // PE4 - Spindle Rx/ EN
 // PE5 - Spindle Tx/ DIR
 // PB0 - Tool Rx/ FLOOD COOLANT
@@ -63,62 +63,35 @@
 extern void SerialRxIntHandler(void);
 extern void SerialTxIntHandler(void);
 
-// Define step pulse output pins. NOTE: All step bit pins must be on the same port.
-//#define STEP_DDR        DDRD
-//#define STEP_PORT       PORTD
-//#define X_STEP_BIT      2  // Uno Digital Pin 2
-//#define Y_STEP_BIT      3  // Uno Digital Pin 3
-//#define Z_STEP_BIT      4  // Uno Digital Pin 4
-//#define STEP_MASK       ((1<<X_STEP_BIT)|(1<<Y_STEP_BIT)|(1<<Z_STEP_BIT)) // All step bits
+// Define step pulse output pins.
+#define X_STEP_BASE     GPIO_PORTC_BASE
+#define X_STEP_PIN     	GPIO_PIN_4
+#define Y_STEP_BASE     GPIO_PORTC_BASE
+#define Y_STEP_PIN     	GPIO_PIN_5
+#define Z_STEP_BASE     GPIO_PORTC_BASE
+#define Z_STEP_PIN     	GPIO_PIN_6
 
-//<!--  Stellaris Requires both a direction and enable for each output pin  --!>
-//<!--  DDR is substituted for DIR and DEN to force errors where DDR is used  --!>
-//<!--  These can also be replaced by ROM_ functions --!>
-#define STEP_DIR_R		GPIO_PORTC_DIR_R
-#define STEP_DEN_R		GPIO_PORTC_DEN_R
-#define STEP_PORT       GPIO_PORTC_DATA_R
-#define X_STEP_BIT      4  // PC4
-#define Y_STEP_BIT      5  // PC5
-#define Z_STEP_BIT      6  // PC6
-#define STEP_MASK       ((1<<X_STEP_BIT)|(1<<Y_STEP_BIT)|(1<<Z_STEP_BIT)) // All step bits
-
-// Define step direction output pins. NOTE: All direction pins must be on the same port.
-//#define DIRECTION_DDR     DDRD
-//#define DIRECTION_PORT    PORTD
-//#define X_DIRECTION_BIT   5  // Uno Digital Pin 5
-//#define Y_DIRECTION_BIT   6  // Uno Digital Pin 6
-//#define Z_DIRECTION_BIT   7  // Uno Digital Pin 7
-//#define DIRECTION_MASK    ((1<<X_DIRECTION_BIT)|(1<<Y_DIRECTION_BIT)|(1<<Z_DIRECTION_BIT)) // All direction bits
+// Define step direction output pins
 //<!--  No real good reason all must be on same port  --!>
 //<!--  Stepper functions will need to be rewritten to write to each individual direction pin  --!>
 #define X_DIRECTION_BASE	GPIO_PORTE_BASE
-#define X_DIRECTION_DIR		GPIO_PORTE_DIR_R
-#define X_DIRECTION_DEN		GPIO_PORTE_DEN_R
-#define X_DIRECTION_DATA	GPIO_PORTE_DATA_R
 #define X_DIRECTION_PIN		GPIO_PIN_0
 
 #define Y_DIRECTION_BASE	GPIO_PORTF_BASE
-#define Y_DIRECTION_DIR		GPIO_PORTF_DIR_R
-#define Y_DIRECTION_DEN		GPIO_PORTF_DEN_R
-#define Y_DIRECTION_DATA	GPIO_PORTF_DATA_R
 #define Y_DIRECTION_PIN		GPIO_PIN_0
 
 #define Z_DIRECTION_BASE	GPIO_PORTA_BASE
-#define Z_DIRECTION_DIR		GPIO_PORTA_DIR_R
-#define Z_DIRECTION_DEN		GPIO_PORTA_DEN_R
-#define Z_DIRECTION_DATA	GPIO_PORTA_DATA_R
 #define Z_DIRECTION_PIN		GPIO_PIN_4
 
 // Define stepper driver enable/disable output pin.
-//#define STEPPERS_DISABLE_DDR    DDRB
-//#define STEPPERS_DISABLE_PORT   PORTB
-//#define STEPPERS_DISABLE_BIT    0  // Uno Digital Pin 8
-//#define STEPPERS_DISABLE_MASK   (1<<STEPPERS_DISABLE_BIT)
 //<!--  CNC Crawler is designed for enable pin (sinking disable)  --!>
-#define STEPPERS_DISABLE_DIR	GPIO_PORTB_DIR_R
-#define STEPPERS_DISABLE_DEN	GPIO_PORTB_DEN_R
-#define STEPPERS_DISABLE_DATA	GPIO_PORTB_DATA_R
-#define STEPPERS_DISABLE_MASK   (1<<STEPPERS_DISABLE_BIT)
+#define STEPPERS_ENABLE_BASE	GPIO_PORTB_BASE
+#define STEPPERS_ENABLE_PIN		GPIO_PIN_2
+// Needed for Axis Lock Function
+#define X_STEP_MASK		GPIO_PIN_0
+#define Y_STEP_MASK		GPIO_PIN_1
+#define Z_STEP_MASK		GPIO_PIN_2
+#define STEP_MASK		(X_STEP_MASK|Y_STEP_MASK|Z_STEP_MASK)
 
 // Define homing/hard limit switch input pins and limit interrupt vectors. 
 // NOTE: All limit bit pins must be on the same port, but not on a port with other input pins (CONTROL).
@@ -221,22 +194,18 @@ extern void SerialTxIntHandler(void);
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 // Will need to rewrite usage of port wide masks for inverting and interrupts
-#define RESET_DIR		GPIO_PORTF_DIR_R
-#define RESET_DEN		GPIO_PORTF_DEN_R
-#define RESET_DATA		GPIO_PORTF_DATA_R
-#define RESET_BIT    	4		//PF4
-#define CYCLE_START_DIR		GPIO_PORTF_DIR_R
-#define CYCLE_START_DEN		GPIO_PORTF_DEN_R
-#define CYCLE_START_DATA	GPIO_PORTF_DATA_R
-#define CYCLE_START_BIT    0		//PF0
-#define FEED_HOLD_DIR		GPIO_PORTE_DIR_R
-#define FEED_HOLD_DEN		GPIO_PORTE_DEN_R
-#define FEED_HOLD_DATA		GPIO_PORTE_DATA_R
-#define FEED_HOLD_BIT    	2	//PE2
-#define SAFETY_DOOR_DIR		GPIO_PORTE_DIR_R
-#define SAFETY_DOOR_DEN		GPIO_PORTE_DEN_R
-#define SAFETY_DOOR_DATA	GPIO_PORTE_DATA_R
-#define SAFETY_DOOR_BIT    2	//PE2
+#define RESET_BASE		GPIO_PORTF_BASE
+#define RESET_PIN		GPIO_PIN_4
+#define RESET_INT		INT_GPIOF
+#define CYCLE_START_BASE	GPIO_PORTF_BASE
+#define CYCLE_START_PIN		GPIO_PIN_0
+#define CYCLE_START_INT		INT_GPIOF
+#define FEED_HOLD_BASE		GPIO_PORTE_BASE
+#define FEED_HOLD_PIN		GPIO_PIN_2
+#define FEED_HOLD_INT		INT_GPIOE
+#define SAFETY_DOOR_BASE	GPIO_PORTE_BASE
+#define SAFETY_DOOR_PIN		GPIO_PIN_2
+#define SAFETY_DOOR_INT		INT_GPIOE
   
 // Define probe switch input pin.
 //#define PROBE_DDR       DDRC
@@ -245,12 +214,7 @@ extern void SerialTxIntHandler(void);
 //#define PROBE_BIT       5  // Uno Analog Pin 5
 //#define PROBE_MASK      (1<<PROBE_BIT)
 #define PROBE_BASE	GPIO_PORTE_BASE
-#define PROBE_DIR	GPIO_PORTE_DIR_R
-#define PROBE_DEN	GPIO_PORTE_DEN_R
-#define PROBE_DATA	GPIO_PORTE_DATA_R
 #define PROBE_PIN	GPIO_PIN_3
-#define PROBE_BIT	3	//PE3
-#define PROBE_MASK      (1<<PROBE_BIT)
 
 
 //<!--  Variable Spindle will be implemented as separate MCU via UART5 TX/RX  --!>

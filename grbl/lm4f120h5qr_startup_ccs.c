@@ -57,20 +57,14 @@ extern uint32_t __STACK_TOP;
 extern void Timer0IntHandler(void);
 extern void Timer1IntHandler(void);
 
-//extern void GPIOAIntHandler(void);
-//extern void GPIOBIntHandler(void);
-//extern void GPIOCIntHandler(void);
-extern void GPIODIntHandler(void);
-//extern void GPIOEIntHandler(void);
-//extern void GPIOFIntHandler(void);
+extern void GPIOIntHandler(void);
 
-extern void WTimer0AIntHandler(void);
-extern void WTimer0BIntHandler(void);
-extern void WTimer1AIntHandler(void);
-extern void WTimer1BIntHandler(void);
+//extern void WTimer0AIntHandler(void);
+//extern void WTimer0BIntHandler(void);
+//extern void WTimer1AIntHandler(void);
+//extern void WTimer1BIntHandler(void);
 
-extern void SerialRxIntHandler(void);
-extern void SerialTxIntHandler(void);
+extern void UART0IntHandler(void);
 
 //*****************************************************************************
 //
@@ -99,12 +93,12 @@ void (* const g_pfnVectors[])(void) =
     0,                                      // Reserved
     IntDefaultHandler,                      // The PendSV handler
     IntDefaultHandler,                      // The SysTick handler
-    IntDefaultHandler,                      // GPIO Port A
-    IntDefaultHandler,                      // GPIO Port B
-    IntDefaultHandler,                      // GPIO Port C
-    IntDefaultHandler,                      // GPIO Port D
-    IntDefaultHandler,                      // GPIO Port E
-    IntDefaultHandler,                      // UART0 Rx and Tx
+	GPIOIntHandler,                 // GPIO Port A
+	GPIOIntHandler,                 // GPIO Port B
+	GPIOIntHandler,                 // GPIO Port C
+	GPIOIntHandler,                 // GPIO Port D
+	GPIOIntHandler,                 // GPIO Port E
+	UART0IntHandler,                // UART0 Rx and Tx
     IntDefaultHandler,                      // UART1 Rx and Tx
     IntDefaultHandler,                      // SSI0 Rx and Tx
     IntDefaultHandler,                      // I2C0 Master and Slave
@@ -118,9 +112,9 @@ void (* const g_pfnVectors[])(void) =
     IntDefaultHandler,                      // ADC Sequence 2
     IntDefaultHandler,                      // ADC Sequence 3
     IntDefaultHandler,                      // Watchdog timer
-    IntDefaultHandler,                      // Timer 0 subtimer A
+	Timer0IntHandler,                 // Timer 0 subtimer A
     IntDefaultHandler,                      // Timer 0 subtimer B
-    IntDefaultHandler,                      // Timer 1 subtimer A
+	Timer1IntHandler,                 // Timer 1 subtimer A
     IntDefaultHandler,                      // Timer 1 subtimer B
     IntDefaultHandler,                      // Timer 2 subtimer A
     IntDefaultHandler,                      // Timer 2 subtimer B

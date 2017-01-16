@@ -46,13 +46,14 @@ void probe_init()
 void probe_configure_invert_mask(uint8_t is_probe_away)
 {
   probe_invert_mask = 0; // Initialize as zero.
-  if (bit_isfalse(settings.flags,BITFLAG_INVERT_PROBE_PIN)) { probe_invert_mask ^= PROBE_MASK; }
-  if (is_probe_away) { probe_invert_mask ^= PROBE_MASK; }
+  if (bit_isfalse(settings.flags,BITFLAG_INVERT_PROBE_PIN)) { probe_invert_mask ^= PROBE_PIN; }
+  if (is_probe_away) { probe_invert_mask ^= PROBE_PIN; }
 }
 
 
 // Returns the probe pin state. Triggered = true. Called by gcode parser and probe state monitor.
-uint8_t probe_get_state() { return((PROBE_DATA & PROBE_PIN) ^ probe_invert_mask); }
+//uint8_t probe_get_state() { return((PROBE_DATA & PROBE_PIN) ^ probe_invert_mask); }
+uint8_t probe_get_state() { return( (uint8_t)GPIOPinRead(PROBE_BASE, PROBE_PIN) ^ probe_invert_mask); }
 
 
 // Monitors probe pin state and records the system position when detected. Called by the

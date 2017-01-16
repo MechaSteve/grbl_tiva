@@ -38,4 +38,7 @@ void limits_go_home(uint8_t cycle_mask);
 // Check for soft limit violations
 void limits_soft_check(float *target);
 
+// Expose interrupt event for isr handler
+void OnLimitEvent(void);
+
 #endif
