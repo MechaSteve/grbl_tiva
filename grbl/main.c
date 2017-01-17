@@ -29,13 +29,32 @@ system_t sys;
 int main(void)
 {
   // Initialize system upon power-up.
+
+	//
+	// Enable lazy stacking for interrupt handlers.  This allows floating-point
+	// instructions to be used within interrupt handlers, but at the expense of
+	// extra stack usage.
+	//
+	FPULazyStackingEnable();
+	//
+	// Set the clocking to run at 80 MHz from the PLL.
+	//
+	SysCtlClockSet(SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
+
   serial_init();   // Setup serial baud rate and interrupts
   settings_init(); // Load Grbl settings from EEPROM
   stepper_init();  // Configure stepper pins and interrupt timers
   system_init();   // Configure pinout pins and pin-change interrupt
 
   memset(sys_position,0,sizeof(sys_position)); // Clear machine position.
-  sei(); // Enable interrupts
+  //sei(); // Enable interrupts
+
+  //
+  // Enable processor interrupts.
+  //
+  IntMasterEnable();
+
+
 
   // Initialize system state.
   #ifdef FORCE_INITIALIZATION_ALARM

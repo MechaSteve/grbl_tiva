@@ -24,6 +24,7 @@
 #define M_PI 3.14159265359f
 
 
+
 // Execute linear motion in absolute millimeter coordinates. Feed rate given in millimeters/second
 // unless invert_feed_rate is true. Then the feed_rate means that the motion should be completed in
 // (1 minute)/feed_rate time.
@@ -313,6 +314,7 @@ uint8_t mc_probe_cycle(float *target, plan_line_data_t *pl_data, uint8_t parser_
 }
 
 
+#ifdef PARKING_ENABLE
 // Plans and executes the single special motion case for parking. Independent of main planner buffer.
 // NOTE: Uses the always free planner ring buffer head to store motion parameters for execution.
 void mc_parking_motion(float *parking_target, plan_line_data_t *pl_data)
@@ -338,6 +340,7 @@ void mc_parking_motion(float *parking_target, plan_line_data_t *pl_data)
   }
 
 }
+#endif
 
 
 // Method to ready the system to reset by setting the realtime reset command and killing any

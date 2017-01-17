@@ -26,7 +26,6 @@ void system_init()
 	InputResetInit();
 	InputFeedHoldInit();
 	InputCycleStartInit();
-	InputOperatorIntConfig();
 }
 
 
@@ -36,7 +35,7 @@ void system_init()
 uint8_t system_control_get_state()
 {
   uint8_t control_state = 0;
-  uint8_t pin = ( InputResetGet() | InputFeedHoldGet() | InputCycleStartGet() );
+  uint8_t pin = ( InputResetRead() | InputFeedHoldRead() | InputCycleStartRead() );
   #ifdef INVERT_CONTROL_PIN_MASK
     pin ^= INVERT_CONTROL_PIN_MASK;
   #endif
@@ -44,36 +43,40 @@ uint8_t system_control_get_state()
     #ifdef ENABLE_SAFETY_DOOR_INPUT_PIN
       if (bit_isfalse(pin,(1<<CONTROL_SAFETY_DOOR_BIT))) { control_state |= CONTROL_PIN_INDEX_SAFETY_DOOR; }
     #endif
-    if (InputResetGet()) { control_state |= CONTROL_PIN_INDEX_RESET; }
-    if (InputFeedHoldGet()) { control_state |= CONTROL_PIN_INDEX_FEED_HOLD; }
-    if (InputCycleStartGet()) { control_state |= CONTROL_PIN_INDEX_CYCLE_START; }
+    if (InputResetRead()) { control_state |= CONTROL_PIN_INDEX_RESET; }
+    if (InputFeedHoldRead()) { control_state |= CONTROL_PIN_INDEX_FEED_HOLD; }
+    if (InputCycleStartRead()) { control_state |= CONTROL_PIN_INDEX_CYCLE_START; }
   }
   return(control_state);
 }
 
 
-// Pin change interrupt for pin-out commands, i.e. cycle start, feed hold, and reset. Sets
+// Pin change event handlers for pin-out commands, i.e. cycle start, feed hold, and reset. Sets
 // only the realtime command execute variable to have the main program execute these when
 // its ready. This works exactly like the character-based realtime commands when picked off
 // directly from the incoming serial data stream.
-ISR(CONTROL_INT_vect)
+void OnOperatorResetEvent(void)
 {
-  uint8_t pin = system_control_get_state();
-  if (pin) {
-    if (bit_istrue(pin,CONTROL_PIN_INDEX_RESET)) {
-      mc_reset();
-    } else if (bit_istrue(pin,CONTROL_PIN_INDEX_CYCLE_START)) {
-      bit_true(sys_rt_exec_state, EXEC_CYCLE_START);
-    #ifndef ENABLE_SAFETY_DOOR_INPUT_PIN
-      } else if (bit_istrue(pin,CONTROL_PIN_INDEX_FEED_HOLD)) {
-        bit_true(sys_rt_exec_state, EXEC_FEED_HOLD);
-    #else
-      } else if (bit_istrue(pin,CONTROL_PIN_INDEX_SAFETY_DOOR)) {
-        bit_true(sys_rt_exec_state, EXEC_SAFETY_DOOR);
-    #endif
-    }
-  }
+	mc_reset();
 }
+
+void OnOperatorCycleStartEvent(void)
+{
+	bit_true(sys_rt_exec_state, EXEC_CYCLE_START);
+}
+
+void OnOperatorFeedHoldEvent(void)
+{
+	bit_true(sys_rt_exec_state, EXEC_FEED_HOLD);
+}
+
+#ifdef ENABLE_SAFETY_DOOR_INPUT_PIN
+void OnSafetyDoorEvent(void)
+{
+	bit_true(sys_rt_exec_state, EXEC_SAFETY_DOOR);
+}
+
+#endif
 
 
 // Returns if safety door is ajar(T) or closed(F), based on pin state.

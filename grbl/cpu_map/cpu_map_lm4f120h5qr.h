@@ -64,27 +64,34 @@ extern void SerialRxIntHandler(void);
 extern void SerialTxIntHandler(void);
 
 // Define step pulse output pins.
+#define X_STEP_PORT 	SYSCTL_PERIPH_GPIOC
 #define X_STEP_BASE     GPIO_PORTC_BASE
 #define X_STEP_PIN     	GPIO_PIN_4
+#define Y_STEP_PORT 	SYSCTL_PERIPH_GPIOC
 #define Y_STEP_BASE     GPIO_PORTC_BASE
 #define Y_STEP_PIN     	GPIO_PIN_5
+#define Z_STEP_PORT 	SYSCTL_PERIPH_GPIOC
 #define Z_STEP_BASE     GPIO_PORTC_BASE
 #define Z_STEP_PIN     	GPIO_PIN_6
 
 // Define step direction output pins
 //<!--  No real good reason all must be on same port  --!>
 //<!--  Stepper functions will need to be rewritten to write to each individual direction pin  --!>
+#define X_DIRECTION_PORT 	SYSCTL_PERIPH_GPIOE
 #define X_DIRECTION_BASE	GPIO_PORTE_BASE
 #define X_DIRECTION_PIN		GPIO_PIN_0
 
+#define Y_DIRECTION_PORT 	SYSCTL_PERIPH_GPIOF
 #define Y_DIRECTION_BASE	GPIO_PORTF_BASE
 #define Y_DIRECTION_PIN		GPIO_PIN_0
 
+#define Z_DIRECTION_PORT 	SYSCTL_PERIPH_GPIOA
 #define Z_DIRECTION_BASE	GPIO_PORTA_BASE
 #define Z_DIRECTION_PIN		GPIO_PIN_4
 
 // Define stepper driver enable/disable output pin.
 //<!--  CNC Crawler is designed for enable pin (sinking disable)  --!>
+#define STEPPERS_ENABLE_PORT 	SYSCTL_PERIPH_GPIOB
 #define STEPPERS_ENABLE_BASE	GPIO_PORTB_BASE
 #define STEPPERS_ENABLE_PIN		GPIO_PIN_2
 // Needed for Axis Lock Function
@@ -109,6 +116,7 @@ extern void SerialTxIntHandler(void);
 //#define LIMIT_INT        PCIE0  // Pin change interrupt enable pin
 //#define LIMIT_INT_vect   PCINT0_vect
 //#define LIMIT_PCMSK      PCMSK0 // Pin change interrupt register
+#define LIMIT_PORT 		SYSCTL_PERIPH_GPIOD
 #define LIMIT_BASE		GPIO_PORTD_BASE
 #define LIMIT_DIR		GPIO_PORTD_DIR_R
 #define LIMIT_DEN		GPIO_PORTD_DEN_R
@@ -143,16 +151,12 @@ extern void SerialTxIntHandler(void);
 //#endif
 
 // Define spindle enable and spindle direction output pins.
+#define SPINDLE_ENABLE_PORT 	SYSCTL_PERIPH_GPIOE
 #define SPINDLE_ENABLE_BASE		GPIO_PORTE_BASE
-#define SPINDLE_ENABLE_DIR		GPIO_PORTE_DIR_R
-#define SPINDLE_ENABLE_DEN		GPIO_PORTE_DEN_R
-#define SPINDLE_ENABLE_DATA		GPIO_PORTE_DATA_R
 #define SPINDLE_ENABLE_PIN		GPIO_PIN_4
 
+#define SPINDLE_DIRECTION_PORT 		SYSCTL_PERIPH_GPIOE
 #define SPINDLE_DIRECTION_BASE		GPIO_PORTE_BASE
-#define SPINDLE_DIRECTION_DIR		GPIO_PORTE_DIR_R
-#define SPINDLE_DIRECTION_DEN		GPIO_PORTE_DEN_R
-#define SPINDLE_DIRECTION_DATA		GPIO_PORTE_DATA_R
 #define SPINDLE_DIRECTION_PIN		GPIO_PIN_5
   
 // Define flood and mist coolant enable output pins.
@@ -168,14 +172,15 @@ extern void SerialTxIntHandler(void);
 //#endif
 
 // Define flood and mist coolant enable output pins.
-#define COOLANT_FLOOD_DIR		GPIO_PORTB_DIR_R
-#define COOLANT_FLOOD_DEN		GPIO_PORTB_DEN_R
-#define COOLANT_FLOOD_DATA		GPIO_PORTB_DATA_R
-#define COOLANT_FLOOD_BIT    0		//PB0
-#define COOLANT_MIST_DIR		GPIO_PORTB_DIR_R
-#define COOLANT_MIST_DEN		GPIO_PORTB_DEN_R
-#define COOLANT_MIST_DATA		GPIO_PORTB_DATA_R
-#define COOLANT_MIST_BIT    1		//PB1
+#define COOLANT_FLOOD_PORT 		SYSCTL_PERIPH_GPIOB
+#define COOLANT_FLOOD_BASE		GPIO_PORTB_BASE
+#define COOLANT_FLOOD_PIN		GPIO_PIN_0
+
+#ifdef ENABLE_M7 // Mist coolant disabled by default. See config.h to enable/disable.
+#define COOLANT_MIST_PORT 		SYSCTL_PERIPH_GPIOB
+#define COOLANT_MIST_BASE		GPIO_PORTB_BASE
+#define COOLANT_MIST_PIN		GPIO_PIN_1
+#endif
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 // NOTE: All CONTROLs pins must be on the same port and not on a port with other input pins (limits).
@@ -194,15 +199,22 @@ extern void SerialTxIntHandler(void);
 
 // Define user-control controls (cycle start, reset, feed hold) input pins.
 // Will need to rewrite usage of port wide masks for inverting and interrupts
-#define RESET_BASE		GPIO_PORTF_BASE
-#define RESET_PIN		GPIO_PIN_4
-#define RESET_INT		INT_GPIOF
-#define CYCLE_START_BASE	GPIO_PORTF_BASE
-#define CYCLE_START_PIN		GPIO_PIN_0
-#define CYCLE_START_INT		INT_GPIOF
-#define FEED_HOLD_BASE		GPIO_PORTE_BASE
-#define FEED_HOLD_PIN		GPIO_PIN_2
-#define FEED_HOLD_INT		INT_GPIOE
+#define OPERATOR_RESET_PORT 	SYSCTL_PERIPH_GPIOF
+#define OPERATOR_RESET_BASE		GPIO_PORTF_BASE
+#define OPERATOR_RESET_PIN		GPIO_PIN_4
+#define OPERATOR_RESET_INT		INT_GPIOF
+
+#define OPERATOR_CYCLE_START_PORT 	SYSCTL_PERIPH_GPIOF
+#define OPERATOR_CYCLE_START_BASE	GPIO_PORTF_BASE
+#define OPERATOR_CYCLE_START_PIN	GPIO_PIN_0
+#define OPERATOR_CYCLE_START_INT	INT_GPIOF
+
+#define OPERATOR_FEED_HOLD_PORT 	SYSCTL_PERIPH_GPIOE
+#define OPERATOR_FEED_HOLD_BASE		GPIO_PORTE_BASE
+#define OPERATOR_FEED_HOLD_PIN		GPIO_PIN_2
+#define OPERATOR_FEED_HOLD_INT		INT_GPIOE
+
+#define SAFETY_DOOR_PORT 	SYSCTL_PERIPH_GPIOE
 #define SAFETY_DOOR_BASE	GPIO_PORTE_BASE
 #define SAFETY_DOOR_PIN		GPIO_PIN_2
 #define SAFETY_DOOR_INT		INT_GPIOE
@@ -213,8 +225,10 @@ extern void SerialTxIntHandler(void);
 //#define PROBE_PORT      PORTC
 //#define PROBE_BIT       5  // Uno Analog Pin 5
 //#define PROBE_MASK      (1<<PROBE_BIT)
+#define PROBE_PORT 	SYSCTL_PERIPH_GPIOE
 #define PROBE_BASE	GPIO_PORTE_BASE
 #define PROBE_PIN	GPIO_PIN_3
+#define PROBE_INT	INT_GPIOE
 
 
 //<!--  Variable Spindle will be implemented as separate MCU via UART5 TX/RX  --!>

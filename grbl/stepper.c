@@ -329,7 +329,9 @@ void OnStepStart(void)
 
 	busy = true;
 	//sei(); // Re-enable interrupts to allow Stepper Port Reset Interrupt to fire on-time.
-		 // NOTE: The remaining code in this ISR will finish before returning to main program.
+	// NOTE: The remaining code in this ISR will finish before returning to main program.
+	// Tail Chaining will allow these interrupts to execute one after the other
+	// TODO: Use interrupt priorities to allow reset ISR to interrupt this interrupt
 
 	// If there is no step segment, attempt to pop one from the stepper buffer
 	if (st.exec_segment == NULL) {
@@ -530,11 +532,6 @@ void stepper_init()
 	AxisStepInit();
 	AxisMasterDisable();
 
-	//
-	// Enable processor interrupts.
-	//
-	IntMasterEnable();
-
 
 	// Configure Timer0A: Stepper Driver Interrupt
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
@@ -587,7 +584,7 @@ static uint8_t st_next_block_index(uint8_t block_index)
 
 #ifdef PARKING_ENABLE
   // Changes the run state of the step segment buffer to execute the special parking motion.
-  void st_parking_setup_buffer()
+  void st_parking_setup_buffer(void)
   {
     // Store step execution data of partially completed block, if necessary.
     if (prep.recalculate_flag & PREP_FLAG_HOLD_PARTIAL_BLOCK) {

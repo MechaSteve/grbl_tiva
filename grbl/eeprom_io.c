@@ -16,6 +16,11 @@
 #include "grbl.h"
 #include "driverlib/eeprom.h"
 
+void eeprom_init(void){
+	SysCtlPeripheralEnable(SYSCTL_PERIPH_EEPROM0);
+	EEPROMInit();
+}
+
 
 /*! \brief  Read byte from EEPROM.
  *

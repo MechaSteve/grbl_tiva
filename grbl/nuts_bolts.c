@@ -121,11 +121,14 @@ void delay_sec(float seconds, uint8_t mode)
 		  protocol_exec_rt_system();
 		  if (sys.suspend & SUSPEND_RESTART_RETRACT) { return; } // Bail, if safety door reopens.
 		}
-		_delay_ms(DWELL_TIME_STEP); // Delay DWELL_TIME_STEP increment
+		delay_ms(DWELL_TIME_STEP); // Delay DWELL_TIME_STEP increment
 	}
 }
 
-
+/************************************
+ *
+ * NOW IMPLEMENTED IN delay.h
+ *
 // Delays variable defined milliseconds. Compiler compatibility fix for _delay_ms(),
 // which only accepts constants in future compiler releases.
 void delay_ms(uint16_t ms)
@@ -155,6 +158,11 @@ void delay_us(uint32_t us)
     }
   }
 }
+*
+*
+*
+***********************************/
+
 
 
 // Simple hypotenuse computation function.

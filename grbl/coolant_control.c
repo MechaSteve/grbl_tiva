@@ -23,48 +23,54 @@
 
 void coolant_init()
 {
-	//COOLANT_FLOOD_DDR |= (1 << COOLANT_FLOOD_BIT);
-	COOLANT_FLOOD_DIR |= (1 << COOLANT_FLOOD_BIT);
-	COOLANT_FLOOD_DEN |= (1 << COOLANT_FLOOD_BIT);
-	#ifdef ENABLE_M7
-		//COOLANT_MIST_DDR |= (1 << COOLANT_MIST_BIT);
-		COOLANT_MIST_DIR |= (1 << COOLANT_MIST_BIT);
-		COOLANT_MIST_DEN |= (1 << COOLANT_MIST_BIT);
-	#endif
+	OutputFloodInit();
+#ifdef ENABLE_M7
+	OutputMistInit();
+#endif
 	coolant_stop();
+}
+
+
+// Returns current coolant output state. Overrides may alter it from programmed state.
+uint8_t coolant_get_state()
+{
+	uint8_t cl_state = COOLANT_STATE_DISABLE;
+	if (OutputFloodRead()) cl_state |= COOLANT_STATE_FLOOD;
+#ifdef ENABLE_M7
+	if (OutputMistRead()) cl_state |= COOLANT_STATE_MIST;
+#endif
+	return(cl_state);
 }
 
 
 void coolant_stop()
 {
-	//COOLANT_FLOOD_PORT &= ~(1 << COOLANT_FLOOD_BIT);
-	COOLANT_FLOOD_DATA &= ~(1 << COOLANT_FLOOD_BIT);
-	#ifdef ENABLE_M7
-		//COOLANT_MIST_PORT &= ~(1 << COOLANT_MIST_BIT);
-		COOLANT_MIST_DATA &= ~(1 << COOLANT_MIST_BIT);
-	#endif
+	OutputFloodOff();
+#ifdef ENABLE_M7
+	OutputMistOff();
+#endif
 }
 
 
 void coolant_set_state(uint8_t mode)
 {
+	if (sys.abort) { return; } // Block during abort.
+
 	if (mode == COOLANT_FLOOD_ENABLE) {
-		//COOLANT_FLOOD_PORT |= (1 << COOLANT_FLOOD_BIT);
-		COOLANT_FLOOD_DATA |= (1 << COOLANT_FLOOD_BIT);
+		OutputFloodOn();
 
-	#ifdef ENABLE_M7
-		} else if (mode == COOLANT_MIST_ENABLE) {
-			//COOLANT_MIST_PORT |= (1 << COOLANT_MIST_BIT);
-			COOLANT_MIST_DATA |= (1 << COOLANT_MIST_BIT);
-	#endif
-
+#ifdef ENABLE_M7
+	} else if (mode == COOLANT_MIST_ENABLE) {
+		OutputMistOn();
+#endif
 	} else {
 		coolant_stop();
 	}
+	sys.report_ovr_counter = 0; // Set to report change immediately
 }
 
 
-void coolant_run(uint8_t mode)
+void coolant_sync(uint8_t mode)
 {
   if (sys.state == STATE_CHECK_MODE) { return; }
   protocol_buffer_synchronize(); // Ensure coolant turns on when specified in program.  

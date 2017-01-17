@@ -34,6 +34,7 @@
 
 void limits_init()
 {
+	SysCtlPeripheralEnable(LIMIT_PORT);
 	GPIODirModeSet(LIMIT_BASE, LIMIT_MASK, GPIO_DIR_MODE_IN);
 #ifdef DISABLE_LIMIT_PIN_PULL_UP
 	// Weak Pull-Down on pins, pins 0 state until connected to Vdd

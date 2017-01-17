@@ -65,6 +65,7 @@ uint8_t serial_get_tx_buffer_count()
 
 void serial_init()
 {
+
 	//
 	// Enable the UART peripheral.
 	//
@@ -73,6 +74,7 @@ void serial_init()
 	//
 	// Set GPIO A0 and A1 as UART pins.
 	//
+	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
 	GPIOPinConfigure(GPIO_PA0_U0RX);
 	GPIOPinConfigure(GPIO_PA1_U0TX);
 	GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
@@ -86,11 +88,22 @@ void serial_init()
 							(UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE |
 							 UART_CONFIG_PAR_NONE));
 
+	//Test
+
+	UARTCharPut(UART0_BASE, 'H');
+	while(UARTBusy(UART0_BASE)) {;}
+	UARTCharPut(UART0_BASE, 'i');
+	while(UARTBusy(UART0_BASE)) {;}
+	UARTCharPut(UART0_BASE, '\n');
+	while(UARTBusy(UART0_BASE)) {;}
+
 	//
 	// Enable the UART interrupt.
 	//
 	IntEnable(INT_UART0);
 	UARTIntEnable(UART0_BASE, UART_INT_RX | UART_INT_TX);
+	UARTIntClear(UART0_BASE, UART_INT_TX);
+
 }
 
 
@@ -113,6 +126,8 @@ void serial_write(uint8_t data) {
   // Enable Data Register Empty Interrupt to make sure tx-streaming is running
   IntEnable(INT_UART0);
   UARTIntEnable(UART0_BASE, UART_INT_TX);
+  // if the UART is not busy, it is not pulling chars from the buffer and we must foce it to start
+  if(!UARTBusy(UART0_BASE)) OnSerialTxEmpty();
 }
 
 

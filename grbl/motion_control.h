@@ -54,8 +54,10 @@ void mc_homing_cycle(uint8_t cycle_mask);
 // Perform tool length probe cycle. Requires probe switch.
 uint8_t mc_probe_cycle(float *target, plan_line_data_t *pl_data, uint8_t parser_flags);
 
+#ifdef PARKING_ENABLE
 // Plans and executes the single special motion case for parking. Independent of main planner buffer.
 void mc_parking_motion(float *parking_target, plan_line_data_t *pl_data);
+#endif
 
 // Performs system reset. If in motion state, kills all motion and sets system alarm.
 void mc_reset();

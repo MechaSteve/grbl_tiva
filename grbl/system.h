@@ -201,5 +201,13 @@ void system_set_exec_accessory_override_flag(uint8_t mask);
 void system_clear_exec_motion_overrides();
 void system_clear_exec_accessory_overrides();
 
+// Expose Event Handlers for Interrupt handler
+void OnOperatorResetEvent(void);
+void OnOperatorCycleStartEvent(void);
+void OnOperatorFeedHoldEvent(void);
+#ifdef ENABLE_SAFETY_DOOR_INPUT_PIN
+void OnSafetyDoorEvent(void);
+#endif
+
 
 #endif
