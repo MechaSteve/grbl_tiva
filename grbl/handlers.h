@@ -34,7 +34,7 @@
 //
 // TRIGGER: Byte received
 // clear the event and then call OnSerialRxByte(uchar data);
-extern void UART0IntHandler(void);
+void UART0IntHandler(void);
 
 // GPIO Pin Change interrupts
 // all GPIO ports trigger the same ISR
@@ -79,7 +79,7 @@ extern void UART0IntHandler(void);
 // ELSE: Interrupts not handled so far
 // Clear all interrupts
 //
-extern void GPIOIntHandler(void);
+void GPIOIntHandler(void);
 
 // Step Pulse start interrupt
 void Timer0IntHandler(void);

@@ -8,6 +8,11 @@
 #include "grbl.h"
 #include "driverlib/uart.h"
 
+//Global debug flags
+tBoolean debug_step_started = false;
+tBoolean debug_step_reset = false;
+tBoolean debug_step_reset_fail = false;
+
 // Serial Communications Interrupt Handlers
 //
 // These interrupts are triggered by one of two events:
@@ -24,16 +29,10 @@ void UART0IntHandler(void)
 {
 	unsigned long status = UARTIntStatus(UART0_BASE, true);
 
-	  /////
-	  /////Blink the Green LED to let us know we got to here
-	  blinkLed();
-	  /////
-	  /////
-
 	if (status & UART_INT_TX)
 	{
 		OnSerialTxEmpty();
-		UARTIntClear(UART0_BASE, UART_INT_TX);
+		//UARTIntClear(UART0_BASE, UART_INT_TX);
 	}
 	if (status & UART_INT_RX)
 	{
@@ -112,13 +111,29 @@ void GPIOIntHandler(void)
 // Step Pulse start interrupt
 void Timer0IntHandler(void)
 {
+	TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
 	OnStepStart();
-
+	if(debug_step_started && !debug_step_reset)
+	{
+		debug_step_reset_fail = true;
+	}
+	debug_step_started = true;
+	debug_step_reset = false;
+	debug_step_reset_fail = false;
 }
 
 // Step Pulse reset interrupt
 void Timer1IntHandler(void)
 {
+	TimerIntClear(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
 	OnStepReset();
+	debug_step_reset = true;
+	debug_step_started = false;
+	debug_step_reset_fail = false;
+	/////
+	/////Blink the Green LED to let us know we got to here
+	//blinkLed();
+	/////
+	/////
 }
 

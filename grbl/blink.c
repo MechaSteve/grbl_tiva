@@ -27,35 +27,28 @@ void blinkLed(void)
     //
     GPIO_PORTF_DIR_R = 0x08;
     GPIO_PORTF_DEN_R = 0x08;
-
     //
-    // Loop forever.
-    //
-    while(1)
-    {
-        //
-        // Turn on the LED.
-        //
-        GPIO_PORTF_DATA_R |= 0x08;
+	// Turn on the LED.
+	//
+	GPIO_PORTF_DATA_R |= 0x08;
 
-        //
-        // Delay for a bit.
-        //
-        for(ulLoop = 0; ulLoop < 20000; ulLoop++)
-        {
-        }
+	//
+	// Delay for a bit.
+	//
+	for(ulLoop = 0; ulLoop < 20000; ulLoop++)
+	{
+	}
 
-        //
-        // Turn off the LED.
-        //
-        GPIO_PORTF_DATA_R &= ~(0x08);
+	//
+	// Turn off the LED.
+	//
+	GPIO_PORTF_DATA_R &= ~(0x08);
 
-        //
-        // Delay for a bit.
-        //
-        for(ulLoop = 0; ulLoop < 2000000; ulLoop++)
-        {
-        }
-    }
+	//
+	// Delay for a bit.
+	//
+	for(ulLoop = 0; ulLoop < 2000000; ulLoop++)
+	{
+	}
 }
 

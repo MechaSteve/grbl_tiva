@@ -33,6 +33,8 @@ uint8_t serial_tx_buffer[TX_RING_BUFFER];
 uint8_t serial_tx_buffer_head = 0;
 volatile uint8_t serial_tx_buffer_tail = 0;
 
+tBoolean serial_tx_running = false;
+
 
 // Returns the number of bytes available in the RX serial buffer.
 uint8_t serial_get_rx_buffer_available()
@@ -83,10 +85,9 @@ void serial_init()
 	// Configure the UART for 115,200, 8-N-1 operation.
 	// Do not use FIFO, maintain atmega functionality
 	//
-	UARTFIFODisable(UART0_BASE);
 	UARTConfigSetExpClk(UART0_BASE, ROM_SysCtlClockGet(), 115200,
-							(UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE |
-							 UART_CONFIG_PAR_NONE));
+							(UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
+	UARTFIFODisable(UART0_BASE);
 
 	//Test
 
@@ -100,55 +101,68 @@ void serial_init()
 	//
 	// Enable the UART interrupt.
 	//
-	IntEnable(INT_UART0);
+	IntDisable(INT_UART0);
+	//UARTTxIntModeSet(UART0_BASE, UART_TXINT_MODE_EOT);
 	UARTIntEnable(UART0_BASE, UART_INT_RX | UART_INT_TX);
 	UARTIntClear(UART0_BASE, UART_INT_TX);
+	IntEnable(INT_UART0);
 
 }
 
 
 // Writes one byte to the TX serial buffer. Called by main program.
-void serial_write(uint8_t data) {
-  // Calculate next head
-  uint8_t next_head = serial_tx_buffer_head + 1;
-  if (next_head == TX_RING_BUFFER) { next_head = 0; }
+void serial_write(uint8_t data)
+{
+	// If the buffer is empty, the UART FIFO has space for data and there is no pending interrupt
+	// we must restart the tx.
+	tBoolean restartReq = (serial_tx_buffer_head == serial_tx_buffer_tail)
+			&& UARTSpaceAvail(UART0_BASE) && (UARTIntStatus(UART0_BASE, UART_INT_TX) == 0);
 
-  // Wait until there is space in the buffer
-  while (next_head == serial_tx_buffer_tail) {
-    // TODO: Restructure st_prep_buffer() calls to be executed here during a long print.
-    if (sys_rt_exec_state & EXEC_RESET) { return; } // Only check for abort to avoid an endless loop.
-  }
+	// Calculate next head
+	uint8_t next_head = serial_tx_buffer_head + 1;
+	if (next_head == TX_RING_BUFFER) { next_head = 0; }
 
-  // Store data and advance head
-  serial_tx_buffer[serial_tx_buffer_head] = data;
-  serial_tx_buffer_head = next_head;
+	// Wait until there is space in the buffer
+	while (next_head == serial_tx_buffer_tail)
+	{
+		// TODO: Restructure st_prep_buffer() calls to be executed here during a long print.
+		if (sys_rt_exec_state & EXEC_RESET) { return; } // Only check for abort to avoid an endless loop.
+	}
 
-  // Enable Data Register Empty Interrupt to make sure tx-streaming is running
-  IntEnable(INT_UART0);
-  UARTIntEnable(UART0_BASE, UART_INT_TX);
-  // if the UART is not busy, it is not pulling chars from the buffer and we must foce it to start
-  if(!UARTBusy(UART0_BASE)) OnSerialTxEmpty();
+	// Store data and advance head
+	serial_tx_buffer[serial_tx_buffer_head] = data;
+	serial_tx_buffer_head = next_head;
+
+	// if the if the buffer was empty and the UART was too, it is the interrupt will not fire
+	//and we must force it to start
+	if(restartReq) OnSerialTxEmpty();
 }
 
 
 // Data Register Empty Interrupt (Event) handler
 void OnSerialTxEmpty(void)
 {
-  uint8_t tail = serial_tx_buffer_tail; // Temporary serial_tx_buffer_tail (to optimize for volatile)
+	uint8_t tail = serial_tx_buffer_tail; // Temporary serial_tx_buffer_tail (to optimize for volatile)
+	//pull the data from the buffer
+	uint8_t data_to_send = serial_tx_buffer[tail];
 
-  // Send a byte from the buffer
-  //UDR0 = serial_tx_buffer[tail];
-  UARTCharPut(UART0_BASE, serial_tx_buffer[tail]);
+	// If the buffer is empty, clear the interrupt and do nothing
+	if (tail == serial_tx_buffer_head)
+	{
+		//manually clear the interrupt without writing to the FIFO
+		//will have to manually restart transmission
+		UARTIntClear(UART0_BASE, UART_INT_TX);
+	}
+	else
+	{
+		// Update tail position
+		tail++;
+		if (tail == TX_RING_BUFFER) { tail = 0; }
+		serial_tx_buffer_tail = tail;
+		// Send a byte from the buffer (this also clears the interrupt)
+		UARTCharPut(UART0_BASE, data_to_send);
 
-  // Update tail position
-  tail++;
-  if (tail == TX_RING_BUFFER) { tail = 0; }
-
-  serial_tx_buffer_tail = tail;
-
-  // Turn off Data Register Empty Interrupt to stop tx-streaming if this concludes the transfer
-  //if (tail == serial_tx_buffer_head) { UCSR0B &= ~(1 << UDRIE0); }
-  if (tail == serial_tx_buffer_head) { UARTIntDisable(UART0_BASE, UART_INT_TX); }
+	}
 }
 
 

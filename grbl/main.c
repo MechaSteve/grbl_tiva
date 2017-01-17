@@ -25,6 +25,8 @@
 // Declare system global variable structure
 system_t sys;
 
+// Test Command: G01X10Y0Z0F120
+
 
 int main(void)
 {

@@ -226,6 +226,12 @@ void st_wake_up()
 	// Enable Stepper Driver Interrupt
 	IntEnable(INT_TIMER0A);
 	TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+	if(bit_istrue(sys_rt_exec_state, EXEC_CYCLE_START))
+	{
+		// Stepping will start after 1ms
+		TimerLoadSet(TIMER0_BASE, TIMER_A, SysCtlClockGet() / 1000 );
+		TimerEnable(TIMER0_BASE, TIMER_A);
+	}
 }
 
 
@@ -304,6 +310,7 @@ void OnStepStart(void)
 {
 	if (busy) { return; } // The busy-flag is used to avoid reentering this interrupt
 
+
 	// Set the direction pins a couple of nanoseconds before we step the steppers
 	//DIRECTION_PORT = (DIRECTION_PORT & ~DIRECTION_MASK) | (st.dir_outbits & DIRECTION_MASK);
 	AxisDirectionSet(st.dir_outbits);
@@ -324,7 +331,13 @@ void OnStepStart(void)
 
 	//Set Timer to give 50% duty cycle at 300 kHz
 	//ENHACEMENT: Daisy Chain trigger Timer1 off Timer0
-	TimerLoadSet(TIMER1_BASE, TIMER_A, SysCtlClockGet() / 600000);
+	//TimerLoadSet(TIMER1_BASE, TIMER_A, SysCtlClockGet() / 600000);
+	TimerDisable(TIMER1_BASE, TIMER_A);
+	TimerConfigure(TIMER1_BASE, TIMER_CFG_ONE_SHOT);
+	IntEnable(INT_TIMER1A);
+    TimerIntEnable(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
+	//TimerLoadSet(TIMER1_BASE, TIMER_A, SysCtlClockGet() / 600000);
+	TimerLoadSet(TIMER1_BASE, TIMER_A, 240);
 	TimerEnable(TIMER1_BASE, TIMER_A);
 
 	busy = true;
@@ -350,7 +363,12 @@ void OnStepStart(void)
 			/////OCR1A = st.exec_segment->cycles_per_tick;
 ////
 			//
-			TimerLoadSet(TIMER0_BASE, TIMER_A, (st.exec_segment->cycles_per_tick) );
+			TimerDisable(TIMER0_BASE, TIMER_A);
+			TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
+			IntEnable(INT_TIMER0A);
+			TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+			//TimerLoadSet(TIMER0_BASE, TIMER_A, (st.exec_segment->cycles_per_tick) );
+			TimerLoadSet(TIMER0_BASE, TIMER_A, SysCtlClockGet() / 1000 );
 			TimerEnable(TIMER0_BASE, TIMER_A);
 			//
 			st.step_count = st.exec_segment->n_step; // NOTE: Can sometimes be zero when moving slow.
@@ -540,7 +558,9 @@ void stepper_init()
 
 	// Configure Timer1A: Stepper Port Reset Interrupt
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER1);
+	TimerDisable(TIMER1_BASE, TIMER_A);
 	TimerConfigure(TIMER1_BASE, TIMER_CFG_ONE_SHOT);
+	TimerLoadSet(TIMER1_BASE, TIMER_A, SysCtlClockGet() / 600000);
     TimerIntEnable(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
 
 	// Configure Timer 1: Stepper Driver Interrupt
