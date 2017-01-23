@@ -23,7 +23,7 @@ NEW BIT AND MASK MACROS IN NUTS AND BOLTS
 //SAFETY - Port E, Pin 3
 //HOLD - Port E, Pin 4
 //
-//ControlWord - |byte|byte|byte|0|0|0|0|Hold|Safety|CycStart|Reset|
+//ControlWord - |byte||byte||byte||0|0|0|0|Hold|Safety|CycStart|Reset|
 
 //GPIO pins function completely differently with StellarisWare
 //Both the .h and .c files need to be totally rewritten
@@ -55,6 +55,10 @@ spindle_control
 stepper
 //the operator panel pins and pin change interrupts should be refactored into a separate operator.h
 System
+
+
+Line Numbers - format is |Ln:73|
+
 
 //create inputs.h and outputs.h for:
 // Limit switches (inputs)
@@ -101,18 +105,6 @@ System
 //		*same as spindle outputs
 
 
-
-Missing Defines
-#define _delay_ms  <!--  come up with something clever  --!>
-#define _delay_us  <!--  come up with something clever  --!>
-coolant_get_state
-coolant_sync
-InputOperatorIntConfig
-pgm_read_byte_near
-PSTR
-sei
-st_parking_restore_buffer
-st_parking_setup_buffer
 
 
 //minimum function for PF525

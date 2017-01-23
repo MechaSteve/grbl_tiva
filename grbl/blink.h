@@ -8,6 +8,6 @@
 #ifndef BLINK_H_
 #define BLINK_H_
 
-void blinkLed(void);
+void BlinkLed(void);
 
 #endif /* BLINK_H_ */

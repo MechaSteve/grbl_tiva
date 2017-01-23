@@ -23,6 +23,7 @@
 
 void coolant_init()
 {
+
 	OutputFloodInit();
 #ifdef ENABLE_M7
 	OutputMistInit();
@@ -73,6 +74,6 @@ void coolant_set_state(uint8_t mode)
 void coolant_sync(uint8_t mode)
 {
   if (sys.state == STATE_CHECK_MODE) { return; }
-  protocol_buffer_synchronize(); // Ensure coolant turns on when specified in program.  
+  protocol_buffer_synchronize(); // Ensure coolant turns on when specified in program.
   coolant_set_state(mode);
 }

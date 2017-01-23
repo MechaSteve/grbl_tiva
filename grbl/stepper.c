@@ -226,7 +226,7 @@ void st_wake_up()
 	// Enable Stepper Driver Interrupt
 	IntEnable(INT_TIMER0A);
 	TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-	if(bit_istrue(sys_rt_exec_state, EXEC_CYCLE_START))
+	if( (bit_istrue(sys_rt_exec_state, EXEC_CYCLE_START)) || (bit_istrue(sys.state,  STATE_JOG)))
 	{
 		// Stepping will start after 1ms
 		TimerLoadSet(TIMER0_BASE, TIMER_A, SysCtlClockGet() / 1000 );
@@ -336,8 +336,8 @@ void OnStepStart(void)
 	TimerConfigure(TIMER1_BASE, TIMER_CFG_ONE_SHOT);
 	IntEnable(INT_TIMER1A);
     TimerIntEnable(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
-	//TimerLoadSet(TIMER1_BASE, TIMER_A, SysCtlClockGet() / 600000);
-	TimerLoadSet(TIMER1_BASE, TIMER_A, 240);
+	TimerLoadSet(TIMER1_BASE, TIMER_A, SysCtlClockGet() / 60000);
+	//TimerLoadSet(TIMER1_BASE, TIMER_A, 240);
 	TimerEnable(TIMER1_BASE, TIMER_A);
 
 	busy = true;
@@ -367,8 +367,8 @@ void OnStepStart(void)
 			TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
 			IntEnable(INT_TIMER0A);
 			TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-			//TimerLoadSet(TIMER0_BASE, TIMER_A, (st.exec_segment->cycles_per_tick) );
-			TimerLoadSet(TIMER0_BASE, TIMER_A, SysCtlClockGet() / 1000 );
+			TimerLoadSet(TIMER0_BASE, TIMER_A, (st.exec_segment->cycles_per_tick) );
+			//TimerLoadSet(TIMER0_BASE, TIMER_A, SysCtlClockGet() / 1000 );
 			TimerEnable(TIMER0_BASE, TIMER_A);
 			//
 			st.step_count = st.exec_segment->n_step; // NOTE: Can sometimes be zero when moving slow.

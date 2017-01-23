@@ -17,7 +17,7 @@
 // Flood Coolant
 void OutputFloodInit(void)
 {
-	SysCtlPeripheralEnable(COOLANT_FLOOD_BASE);
+	SysCtlPeripheralEnable(COOLANT_FLOOD_PORT);
 	GPIOPadConfigSet(COOLANT_FLOOD_BASE, COOLANT_FLOOD_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD);
 	GPIODirModeSet(COOLANT_FLOOD_BASE, COOLANT_FLOOD_PIN, GPIO_DIR_MODE_OUT);
 }
@@ -35,7 +35,7 @@ tBoolean OutputFloodRead(void) { return GPIOPinRead(COOLANT_FLOOD_BASE, COOLANT_
 #ifdef ENABLE_M7
 void OutputMistInit(void)
 {
-	SysCtlPeripheralEnable(COOLANT_MIST_BASE);
+	SysCtlPeripheralEnable(COOLANT_MIST_PORT);
 	GPIOPadConfigSet(COOLANT_MIST_BASE, COOLANT_MIST_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD);
 	GPIODirModeSet(COOLANT_MIST_BASE, COOLANT_MIST_PIN, GPIO_DIR_MODE_OUT);
 }
@@ -98,26 +98,26 @@ tBoolean OutputSpindleDirectionIsCW(void) { return GPIOPinRead(SPINDLE_DIRECTION
 // Stepper Enable and direction initializations
 void AxisEnDirInit(void)
 {
-	//set pin direction and drive 2ma, Open Drain, Weak Pull-Up (NPN Sinking Output)
+	//set pin direction and drive 2ma, push-pull
 
 	//Master Enable
 	SysCtlPeripheralEnable(STEPPERS_ENABLE_PORT);
-	GPIOPadConfigSet(STEPPERS_ENABLE_BASE, STEPPERS_ENABLE_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_OD_WPU);
+	GPIOPadConfigSet(STEPPERS_ENABLE_BASE, STEPPERS_ENABLE_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD);
 	GPIODirModeSet(STEPPERS_ENABLE_BASE, STEPPERS_ENABLE_PIN, GPIO_DIR_MODE_OUT);
 
 	//X Direction
 	SysCtlPeripheralEnable(X_DIRECTION_PORT);
-	GPIOPadConfigSet(X_DIRECTION_BASE, X_DIRECTION_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_OD_WPU);
+	GPIOPadConfigSet(X_DIRECTION_BASE, X_DIRECTION_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD);
 	GPIODirModeSet(X_DIRECTION_BASE, X_DIRECTION_PIN, GPIO_DIR_MODE_OUT);
 
 	//Y Direction
 	SysCtlPeripheralEnable(Y_DIRECTION_PORT);
-	GPIOPadConfigSet(Y_DIRECTION_BASE, Y_DIRECTION_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_OD_WPU);
+	GPIOPadConfigSet(Y_DIRECTION_BASE, Y_DIRECTION_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD);
 	GPIODirModeSet(Y_DIRECTION_BASE, Y_DIRECTION_PIN, GPIO_DIR_MODE_OUT);
 
 	//Z Direction
 	SysCtlPeripheralEnable(Z_DIRECTION_PORT);
-	GPIOPadConfigSet(Z_DIRECTION_BASE, Z_DIRECTION_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_OD_WPU);
+	GPIOPadConfigSet(Z_DIRECTION_BASE, Z_DIRECTION_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD);
 	GPIODirModeSet(Z_DIRECTION_BASE, Z_DIRECTION_PIN, GPIO_DIR_MODE_OUT);
 }
 
@@ -159,8 +159,9 @@ void AxisStepInit(void)
 
 	//X Step
 	SysCtlPeripheralEnable(X_STEP_PORT);
-	GPIOPadConfigSet(X_STEP_BASE, X_STEP_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_OD_WPU);
-	GPIODirModeSet(X_STEP_BASE, X_STEP_PIN, GPIO_DIR_MODE_OUT);
+	GPIOPinTypeGPIOOutput(X_STEP_BASE, X_STEP_PIN);
+	//GPIOPadConfigSet(X_STEP_BASE, X_STEP_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_OD_WPU);
+	//GPIODirModeSet(X_STEP_BASE, X_STEP_PIN, GPIO_DIR_MODE_OUT);
 
 	//Y Step
 	SysCtlPeripheralEnable(Y_STEP_PORT);
@@ -177,15 +178,17 @@ void AxisStepInit(void)
 // Write to Step Pin
 void AxisStepSet(unsigned long ulStepMask)
 {
+
+
 	// X Axis Step
-	if(ulStepMask & X_AXIS) GPIOPinWrite(X_STEP_BASE, X_STEP_PIN, X_STEP_PIN);
+	if(ulStepMask & X_AXIS_MASK) GPIOPinWrite(X_STEP_BASE, X_STEP_PIN, X_STEP_PIN);
 	else GPIOPinWrite(X_STEP_BASE, X_STEP_PIN, 0);
 
 	// Y Axis Step
-	if(ulStepMask & Y_AXIS) GPIOPinWrite(Y_STEP_BASE, Y_STEP_PIN, Y_STEP_PIN);
+	if(ulStepMask & Y_AXIS_MASK) GPIOPinWrite(Y_STEP_BASE, Y_STEP_PIN, Y_STEP_PIN);
 	else GPIOPinWrite(Y_STEP_BASE, Y_STEP_PIN, 0);
 
 	// Z Axis Step
-	if(ulStepMask & Z_AXIS) GPIOPinWrite(Z_STEP_BASE, Z_STEP_PIN, Z_STEP_PIN);
+	if(ulStepMask & Z_AXIS_MASK) GPIOPinWrite(Z_STEP_BASE, Z_STEP_PIN, Z_STEP_PIN);
 	else GPIOPinWrite(Z_STEP_BASE, Z_STEP_PIN, 0);
 }

@@ -91,9 +91,9 @@ extern void SerialTxIntHandler(void);
 
 // Define stepper driver enable/disable output pin.
 //<!--  CNC Crawler is designed for enable pin (sinking disable)  --!>
-#define STEPPERS_ENABLE_PORT 	SYSCTL_PERIPH_GPIOB
-#define STEPPERS_ENABLE_BASE	GPIO_PORTB_BASE
-#define STEPPERS_ENABLE_PIN		GPIO_PIN_2
+#define STEPPERS_ENABLE_PORT 	SYSCTL_PERIPH_GPIOD
+#define STEPPERS_ENABLE_BASE	GPIO_PORTD_BASE
+#define STEPPERS_ENABLE_PIN		GPIO_PIN_6
 // Needed for Axis Lock Function
 #define X_STEP_MASK		GPIO_PIN_0
 #define Y_STEP_MASK		GPIO_PIN_1

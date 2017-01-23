@@ -7,7 +7,7 @@
 
 #include "grbl.h"
 
-void blinkLed(void)
+void BlinkLed(void)
 {
 	volatile unsigned long ulLoop;
 
