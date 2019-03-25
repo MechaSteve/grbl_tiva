@@ -139,3 +139,14 @@ STATUS:
 POWER:
 11 0V Common (Drive has Sourcing inputs, sourcing outputs)
 12 +24V Common
+
+//Connection using RS485 Modbus
+// 8p8c connector
+1 Common 0V (GPIO and STO, terminal 4)
+2 Safe Torque Off (wire to S1 & S2, monitor with opto w/ std input conditioning)
+3 24VDC (from drive)
+4(pr w/5) RS-485 B (use SN75176 TXRX)
+5(pr w/4) RS-485 A
+6 Run / nStop (PNP output to drive, BJT on output of opto)
+7 nFault (NPN output from drive, drive opto)
+8 Reset (see Run)
