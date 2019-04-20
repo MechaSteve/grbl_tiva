@@ -25,11 +25,15 @@
 #define RX_RING_BUFFER (RX_BUFFER_SIZE+1)
 #define TX_RING_BUFFER (TX_BUFFER_SIZE+1)
 
+//This array must remain as an 8 bit data type to store character data (maybe change to char?)
 uint8_t serial_rx_buffer[RX_RING_BUFFER];
+//TODO: Head and tail offsets can be native 32bit words
 uint8_t serial_rx_buffer_head = 0;
 volatile uint8_t serial_rx_buffer_tail = 0;
 
+//This array must remain as an 8 bit data type to store character data (maybe change to char?)
 uint8_t serial_tx_buffer[TX_RING_BUFFER];
+//TODO: Head and tail offsets can be native 32bit words
 uint8_t serial_tx_buffer_head = 0;
 volatile uint8_t serial_tx_buffer_tail = 0;
 
@@ -134,34 +138,45 @@ void serial_write(uint8_t data)
 	serial_tx_buffer_head = next_head;
 
 	// if the if the buffer was empty and the UART was too, it is the interrupt will not fire
-	//and we must force it to start
-	if(restartReq) OnSerialTxEmpty();
+	//and we must force it to start. Set SW Interrupt bit.
+	//restartReq = restartReq	|| (UARTSpaceAvail(UART0_BASE) && (UARTIntStatus(UART0_BASE, UART_INT_TX) == 0));
+	//if(restartReq) IntPendSet(INT_UART0);
+
+	//If we always force a sw interrupt we will at least check for space in the UART
+	IntPendSet(INT_UART0);
 }
 
 
 // Data Register Empty Interrupt (Event) handler
 void OnSerialTxEmpty(void)
 {
+
 	uint8_t tail = serial_tx_buffer_tail; // Temporary serial_tx_buffer_tail (to optimize for volatile)
 	//pull the data from the buffer
 	uint8_t data_to_send = serial_tx_buffer[tail];
 
-	// If the buffer is empty, clear the interrupt and do nothing
-	if (tail == serial_tx_buffer_head)
+	//UART char put is blocking.
+	//Check that there is space before trying to write to UART
+	//if not exit interrupt (interrupt will not clear) and allow any other interrupts to run while we wait
+	if(UARTSpaceAvail(UART0_BASE))
 	{
-		//manually clear the interrupt without writing to the FIFO
-		//will have to manually restart transmission
-		UARTIntClear(UART0_BASE, UART_INT_TX);
-	}
-	else
-	{
-		// Update tail position
-		tail++;
-		if (tail == TX_RING_BUFFER) { tail = 0; }
-		serial_tx_buffer_tail = tail;
-		// Send a byte from the buffer (this also clears the interrupt)
-		UARTCharPut(UART0_BASE, data_to_send);
-
+		// If the buffer is empty, clear the interrupt and do nothing
+		if (tail == serial_tx_buffer_head)
+		{
+			//manually clear the interrupt without writing to the FIFO
+			//will have to manually restart transmission
+			UARTIntClear(UART0_BASE, UART_INT_TX);
+		}
+		else
+		{
+			// Update tail position
+			tail++;
+			if (tail == TX_RING_BUFFER) { tail = 0; }
+			serial_tx_buffer_tail = tail;
+			// Send a byte from the buffer (this also clears the interrupt)
+			// WARNING! this function will block if there is not space available!
+			UARTCharPut(UART0_BASE, data_to_send);
+		}
 	}
 }
 
