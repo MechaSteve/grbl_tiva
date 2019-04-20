@@ -29,19 +29,15 @@ void UART0IntHandler(void)
 {
 	unsigned long status = UARTIntStatus(UART0_BASE, true);
 
-	//if (status & UART_INT_TX)
-	//{
-	//	OnSerialTxEmpty();
-	//	//UARTIntClear(UART0_BASE, UART_INT_TX);
-	//}
+	if (status & UART_INT_TX)
+	{
+		OnSerialTxEmpty();
+		//UARTIntClear(UART0_BASE, UART_INT_TX);
+	}
 	if (status & UART_INT_RX)
 	{
 		if (UARTCharsAvail(UART0_BASE))	OnSerialRx( (uint8_t)( UARTCharGet(UART0_BASE) ) );
-		else UARTIntClear(UART0_BASE, UART_INT_RX);
-	}
-	else // SW Interrupt, for starting TX Cycle
-	{
-		OnSerialTxEmpty();
+		UARTIntClear(UART0_BASE, UART_INT_RX);
 	}
 }
 

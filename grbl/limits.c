@@ -79,8 +79,7 @@ void limits_disable()
 uint8_t limits_get_state()
 {
   uint8_t limit_state = 0;
-  // WARNING MAJOR HACK! Remove |Z_LIMIT or very bad!!
-  uint8_t pin = GPIOPinRead(LIMIT_BASE, LIMIT_MASK) | Y_LIMIT_PIN | Z_LIMIT_PIN;
+  uint8_t pin = (LIMIT_DATA & LIMIT_MASK);
   #ifdef INVERT_LIMIT_PIN_MASK
     pin ^= INVERT_LIMIT_PIN_MASK;
   #endif

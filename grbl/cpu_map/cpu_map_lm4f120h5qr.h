@@ -56,59 +56,6 @@
 // PF4 - Reset (Left User Button, SW1)
 // PF0 - Cycle Start (Right User Button, SW2)
 
-
-/////////////////////////////////////
-//Based On OSH Park Order for EK-TM4C123GXL
-////////////////////////////////////
-//J1
-//1: 3v3
-//2: PB5 :X-Axis Limit 1   (Future: Probe Input)
-//3: PB0 :U1Tx: Bluetooth Serial TX
-//4: PB1 :U1Rx: Bluetooth Serial Rx
-//5: PE4 :U5Tx: Spindle Tx
-//6: PE5 :U5Rx: Spindle Rx
-//7: PB4 : NC   (Future: Spindle RTS)
-//8: PA5 : NC   (Future: Spindle Run Output)
-//9: PA6 : NC   (Future: Spindle Reset Output)
-//10:PA7 : NC
-
-//J2
-//1: GND
-//2: PB2: NC : (Future Move X Direction to here)
-//3: PE0: X Direction : (Future Move Y Direction to here)
-//4: PF0: Y Direction : User SW2 (right) : (Future No External Connection)
-//5: HW Reset: NC
-//6: PB7: NC : Connected to PD1 (J3.04)
-//7: PB6: NC : Connected to PD0 (J3.03)
-//8: PA4: Z Direction
-//9: PA3: A Direction
-//10:PA2: NC
-
-//J3
-//1: Vbus : 5V for stepper control
-//2: GND
-//3: PD0 : X-Axis Limit 2 : Connected to PB6 (J2.07) : (Future Shift all down 1, this becomes X-Axis Limit 1)
-//4: PD1 : Y-Axis Limit 1 : Connected to PB7 (J2.06)
-//5: PD2 : Y-Axis Limit 2
-//6: PD3 : Z-Axis Limit 1
-//7: PE1 : Z-Axis Limit 2
-//8: PE2 : A-Axis Limit 1 / Home/0deg
-//9: PE3 : A-Axis Limit 2 / Probe
-//10:PF1 : NC
-
-//J4
-//1: PF2: Blue LED
-//2: PF3: Green LED
-//3: PB3: Master Enable (to all steppers and to safety header) (Future: only to steppers)
-//4: PC4: WT0CCP0 : X-Axis Step
-//5: PC5: WT0CCP1 : Y-Axis Step
-//6: PC6: WT1CCP0 : Z-Axis Step
-//7: PC7: WT1CCP1 : A-Axis Step
-//8: PD6: Enable Return From Safety Port (Future: return of Safety Out + 1k ohm)
-//9: PD7: NC : Future Enable Out (Pulse Testing)
-//10:PF4: User SW1 (left)
-
-
 // Define serial port pins and interrupt vectors.
 //#define SERIAL_RX     USART_RX_vect
 //#define SERIAL_UDRE   USART_UDRE_vect
