@@ -1,0 +1,152 @@
+NEW BIT AND MASK MACROS IN NUTS AND BOLTS
+// Bit field and masking macros
+<!--  Replace with individual BIT_0 01, BIT_1 02, BIT_2 04, etc for all 32bits  --!>
+#define bit(n) (1 << n) 
+<!--  Replace with bitband region  --!>
+<!--  Create Macro for bitband(word, bit)  --!>
+#define bit_true_atomic(x,mask) {uint8_t sreg = SREG; cli(); (x) |= (mask); SREG = sreg; }
+#define bit_false_atomic(x,mask) {uint8_t sreg = SREG; cli(); (x) &= ~(mask); SREG = sreg; }
+#define bit_toggle_atomic(x,mask) {uint8_t sreg = SREG; cli(); (x) ^= (mask); SREG = sreg; }
+#define bit_true(x,mask) (x) |= (mask)
+#define bit_false(x,mask) (x) &= ~(mask)
+#define bit_istrue(x,mask) ((x & mask) != 0)
+#define bit_isfalse(x,mask) ((x & mask) == 0)
+
+//better single point of truth if macros are defined for things like 
+//#define SPINDLE_DIRECTION_ON()	{SPINDLE_DIRECTION_DATA |= (SPINDLE_DIRECTION_PIN);}
+//#define SPINDLE_DIRECTION_OFF()	{SPINDLE_DIRECTION_DATA &= ~(SPINDLE_DIRECTION_PIN);}
+
+//It is critical that the GPIO pins are abstracted into logical data structures
+//i.e. 
+//RESET - Port F, Pin 0
+//CYCLE_START - Port F, Pin 4
+//SAFETY - Port E, Pin 3
+//HOLD - Port E, Pin 4
+//
+//ControlWord - |byte||byte||byte||0|0|0|0|Hold|Safety|CycStart|Reset|
+
+//GPIO pins function completely differently with StellarisWare
+//Both the .h and .c files need to be totally rewritten
+//Create new files for the following hardware abstractions:
+coolant_control
+eeprom
+limits
+//probe state monitor could be refactored into motion control and eeprom using a new eeprom function for capturing probe positon
+probe
+//get_direction_pin_mask will need to be reworked, as do all places where it is used
+//this should become a set of flags that are used to decide how to set the actual
+//GPIO pin
+settings
+//Refactor into serial_buffer.h and serial_com.h
+//serial_com.h will just have Init functions, interrupt enable/disable, and get/put functions
+//serial_buffer will be called by the main program and manage the buffer
+// it will also contain event handlers for tx and rx interrupts
+//future improvements should allow for larger buffer and Tx/Rx FIFO function
+serial
+//create compile time option for FM spindle control
+//constants for SPINDLE_REF_RPM and SPINDLE_REF_PULSE_FREQ
+//create separate file for spindle_io.h
+spindle_control
+//TI complier complained about whitespace after backslash in velocity diagrams
+//initially only rewrite timer init/config/start/stop and ISR functions
+//direction Pins must be written to individually (on multiple ports)
+//this should be written so the external interface does not expose hardware
+// or particular implementation.
+stepper
+//the operator panel pins and pin change interrupts should be refactored into a separate operator.h
+System
+
+
+Line Numbers - format is |Ln:73|
+
+
+//create inputs.h and outputs.h for:
+// Limit switches (inputs)
+//		LimitInputsInit()
+//		long LimitInputsGet()
+//		LimitIntConfig()
+//		LimitIntEnable()
+//		LimitIntDisable()
+//		long LimitIntStatus()
+//		LimitIntClear()
+// Probe switches (inputs)
+//		*same as limits
+// Safety Circuit (inputs)
+/		*same as limits
+// Operator Buttons (inputs)
+//		*same as limits
+// Axis Enable and Direction (outputs)
+//		AxisEnDirInit()
+//		AxisEnable()
+//		AxisDisable()
+//		AxisForward(AXIS_N)
+//		AxisReverse(AXIS_N)
+// Spindle En and Dir (outputs)
+//		SpindleOutputsInit()
+//		SpindleOutputsCW()
+//		SpindleOutputsCCW()
+//		SpindleOutputsStop()
+// Spindle Ref (outputs) - PWM or FM control
+//		SpindleRefInit()
+//		SpindleRefSet(long)
+// Spindle AtRef (inputs)
+//		SpindleInputsInit()
+//		tboolean SpindleAtRefGet()
+// Spindle Feedback (inputs) - Analog input
+//		SpindleFeedbackInit()
+//		SpindleIntConfig()
+//		SpindleIntEnable()
+//		SpindleIntDisable()
+//		SpindleIntStatus()
+//		SpindleIntClear()
+//		OnSpindleEvent()   // read feedback or educated guessing with a timer
+//		long SpindleFeedbackGet()
+// Coolant Flood and Mist (outputs)
+//		*same as spindle outputs
+
+
+
+
+//minimum function for PF525
+//connect to npn transistors in cabinet for inputs TO drive
+//connect to pnp transistors with 3.3v collector for output FROM drive
+1 Enable
+2 Direction / Pulse
+3 0V Common
+4 At Speed
+
+
+
+
+//Simplest solution for spindle may be an MSP430 with a breakout booster
+//Connect to main cabinet with 5v/gnd/tx/rx/shield
+Spindle IO Connections to PF525:
+SAFETY:
+1 ChA
+2 ChB
+3 Safe+24
+CONTROL:
+4 Run
+5 Direction
+REFERENCE:
+6 Pulse Train (dc sinking output from mcu)
+FEEDBACK:
+7 4-20ma Current Feedback
+8 Analog Common
+STATUS:
+9 Safety Ready
+10 At Speed
+POWER:
+11 0V Common (Drive has Sourcing inputs, sourcing outputs)
+12 +24V Common
+
+//Connection using RS485 Modbus
+// 8p8c connector
+1 Common 0V (GPIO and STO, terminal 4)
+2 Safe Torque Off (wire to S1 & S2, monitor with opto w/ std input conditioning)
+3 24VDC (from drive)
+4(pr w/5) RS-485 B (use SN75176 TXRX)
+5(pr w/4) RS-485 A
+6 Run / nStop (PNP output to drive, BJT on output of opto)
+7 nFault (NPN output from drive, drive opto)
+8 Reset (see Run)
