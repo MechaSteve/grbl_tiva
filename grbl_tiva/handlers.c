@@ -130,8 +130,8 @@ void Timer1IntHandler(void)
 
 // Spindle Timing counter interrupt
 void SpindleTimerHandler(void)
-{
-    TimerIntClear(TIMER2_BASE, TIMER_TIMA_TIMEOUT);
+{//this must not be re-triggered before returning
     spindle_counter_tick();
+    TimerIntClear(TIMER2_BASE, TIMER_TIMA_TIMEOUT);
 }
 

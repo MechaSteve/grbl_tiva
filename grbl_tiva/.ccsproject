@@ -14,5 +14,5 @@
 	<templateProperties value="id=com.ti.common.project.core.emptyProjectWithMainTemplate,"/>
 	<filesToOpen value="main.c,"/>
 	<isTargetManual value="false"/>
-	<origin value="C:/Users/steph/workspace_v9/grbl_tiva"/>
+	<origin value="C:/git/grbl_tiva/grbl_tiva"/>
 </projectOptions>

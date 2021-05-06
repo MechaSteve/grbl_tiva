@@ -65,8 +65,15 @@ int spindle_get_state();
   // Computes Hz register value for the given RPM for quick updating.
   int spindle_compute_hz_value(float rpm);
   
-  int ModWriteSingle(unsigned char node, uint16_t address, uint16_t value);
+  void spindle_update();
 
+  int ModWriteSingleBlocking(unsigned char node, uint16_t address, uint16_t value);
+  // Read function not yet implemented
+  int ModReadSingleBlocking(unsigned char node, uint16_t address);
+
+  //async method not yet implemented
+  int ModWriteSingle(unsigned char node, uint16_t address, uint16_t value);
+  //async method not yet implemented
   int ModReadSingle(unsigned char node, uint16_t address);
 
   int ModReadbackSingle(unsigned char node);

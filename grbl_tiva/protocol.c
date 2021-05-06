@@ -206,7 +206,6 @@ void protocol_execute_realtime()
 {
   protocol_exec_rt_system();
   if (sys.suspend) { protocol_exec_rt_suspend(); }
-  spindle_update();
 }
 
 

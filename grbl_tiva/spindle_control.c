@@ -23,17 +23,34 @@
 #include "driverlib/gpio.h"
 #include "driverlib/pin_map.h"
 #include "driverlib/uart.h"
+#include "driverlib/rom.h"
 
 
 static float rpm_per_hz = 60.0; // Precalulated value to speed up rpm to Hz conversions.
-static int hz_x_100_setpoint; //RPM times 100 for setpoint write command
+static int hz_x_100_setpoint; //Hz times 100 for setpoint write command
 static int hz_x_100_feedback; //RPM times 100 for storing read command
-static int spindle_comm_time; //Counter to detect comm timeout failure
-static int read_buffer[16];
+static int spindle_logic_word;
+static int spindle_status_word;
+static int spindle_fault_code;
+static int spindle_current_x100;
+static int spindle_voltage_out;
+static int spindle_bus_voltage;
+static int spindle_reset_request;
+static int spindle_comm_time = 0; //Counter to detect comm timeout failure
+//read buffer to hold data as rxed
+static uint8_t read_buffer[32];
 static int read_buffer_position = 0;
 static bool write_started = false;
 static bool read_started = false;
 static bool readback_started = false;
+
+
+#define SPINDLE_MODBUS_NODE 100
+#define MODBUS_READ_MULTI 3
+#define MODBUS_WRITE_SINGLE 6
+#define MODBUS_WRITE_MULTI 16
+#define MODBUS_ADDR_COMMAND 0x2000
+#define MODBUS_ADDR_SETPOINT 0x2001
 
 /////////////////////////////////////////////
 //                                         //
@@ -59,9 +76,9 @@ void spindle_init()
     SysCtlPeripheralEnable(SPINDLE_TIMER);
     TimerDisable(SPINDLE_TIMER_BASE, SPINDLE_SUB_TIMER);
     TimerConfigure(SPINDLE_TIMER_BASE, SPINDLE_TIMER_CFG);
-    TimerConfigure(SPINDLE_TIMER_BASE, SPINDLE_TIMER_CFG);
     TimerLoadSet(SPINDLE_TIMER_BASE, SPINDLE_SUB_TIMER, SysCtlClockGet() / 1000);
-    //TimerIntEnable(SPINDLE_TIMER_BASE, SPINDLE_INT_CFG);
+    IntEnable(SPINDLE_INT);
+    TimerIntEnable(SPINDLE_TIMER_BASE, SPINDLE_INT_CFG);
     TimerEnable(SPINDLE_TIMER_BASE, SPINDLE_SUB_TIMER);
 
 	// Configure variable spindle
@@ -84,7 +101,7 @@ void spindle_initDSI()
     // Configure GPIO Pins for UART mode.
     //
     GPIOPinConfigure(SPINDLE_RX_CONFIG);
-    GPIOPinConfigure(SPINDLE_RX_CONFIG);
+    GPIOPinConfigure(SPINDLE_TX_CONFIG);
     GPIOPinTypeUART(SPINDLE_RX_BASE, SPINDLE_RX_PIN);
     GPIOPinTypeUART(SPINDLE_TX_BASE, SPINDLE_TX_PIN);
     GPIOPinTypeGPIOOutput(SPINDLE_RTS_BASE, SPINDLE_RTS_PIN);
@@ -95,22 +112,23 @@ void spindle_initDSI()
     SysCtlPeripheralEnable(SPINDLE_UART_PORT);
 
     //
-    // Initialize the UART for DSI Connection at 115200 baud
+    // Initialize the UART for DSI Connection at 9600 baud
     //
-    UARTConfigSetExpClk(SPINDLE_UART_BASE, 16000000, 9600, (UART_CONFIG_PAR_NONE | UART_CONFIG_STOP_ONE | UART_CONFIG_WLEN_8));
+    UARTConfigSetExpClk(SPINDLE_UART_BASE, SysCtlClockGet(), 38400, (UART_CONFIG_PAR_NONE | UART_CONFIG_STOP_ONE | UART_CONFIG_WLEN_8));
+    // Allow the use of the FIFO to allow for writing up to 16 bytes
+    // A write command of both logic and speed is |node|func|AddH|AddL|CountH|CountL|Bytes|Dat1H|Dat1L|Dat2H|Dat2L|CRCH|CRCL| (13 bytes)
     UARTFIFOEnable(SPINDLE_UART_BASE);
 
     //
     // Enable the UART operation.
     //
-    //UARTStdioConfig(1, 115200, 16000000);
     UARTEnable(SPINDLE_UART_BASE);
 }
 
 // Spindle free running counter (~1ms)
 void spindle_counter_tick()
 {
-    spindle_comm_time++;
+    spindle_update();
 }
 
 // Spindle state machine cyclicly polls feedback and sends set point
@@ -123,6 +141,7 @@ void spindle_update()
             write_started = false;
             read_started = false;
             spindle_comm_step = 1;
+            spindle_comm_time = 0;
             break;
         case 1: //Write Setpoint
             comm_status = ModWriteSingle(100, 0x2001, hz_x_100_setpoint);
@@ -132,72 +151,88 @@ void spindle_update()
                 spindle_comm_time = 0;
             }
             break;
-        case 2:
-            comm_status = ModReadbackSingle(100);
+        case 2: //Silence
+            spindle_comm_step = 3;
+            spindle_comm_time = 0;
+            break;
+        case 3: // Read Speed Feedback
+            comm_status = ModReadSingle(100, 0x2103);
             if (comm_status != -1)
             {
-                spindle_comm_step = 5;
+                hz_x_100_feedback = comm_status;
+                spindle_comm_step = 4;
                 spindle_comm_time = 0;
             }
             break;
-        case 5: // Read Speed Feedback
-            comm_status = ModReadSingle(100, 0x2103);
+        case 4: //Silence
+            spindle_comm_step = 5;
+            spindle_comm_time = 0;
+            break;
+        case 5: //Write Logic Command Word
+            if((spindle_logic_word & 0x0008) == 0)//if not attempting to clear a fault
+            {
+                if(!((spindle_status_word & 0x0080) == 0))//Drive Faulted
+                {
+                    spindle_logic_word |= 0x0008;//attempt to clear fault
+                }
+            }
+            else
+            {
+                spindle_logic_word &= ~0x0008; //reset clear fault bit
+            }
+            comm_status = ModWriteSingle(100, 0x2000, spindle_logic_word);
             if (comm_status != -1)
             {
                 spindle_comm_step = 6;
                 spindle_comm_time = 0;
             }
             break;
-        case 6:
-            comm_status = ModReadbackSingle(100);
+        case 6: //Silence
+            spindle_comm_step = 7;
+            spindle_comm_time = 0;
+            break;
+        case 7: // Read Logic Status Word
+            comm_status = ModReadSingle(100, 0x2100);
             if (comm_status != -1)
             {
-                hz_x_100_feedback = comm_status;
-                spindle_comm_step = 0;
+                spindle_status_word = comm_status;
+                spindle_comm_step = 8;
                 spindle_comm_time = 0;
             }
+            break;
+        case 8: //Silence
+            spindle_comm_step = 0;
+            spindle_comm_time = 0;
             break;
         default:
             spindle_comm_step = 0;
             break;
     }
     spindle_comm_time++;
-    if (spindle_comm_time > 5000) spindle_comm_step = 0;
+    if (spindle_comm_time > 500)
+    {
+        spindle_comm_step = 0;
+    }
 
 }
+
 
 // Compute the MODBUS RTU CRC
 unsigned int ModRTU_CRC(unsigned char buf[], int len)
 {
     uint16_t crc = 0xFFFF;
-    int pos, i;
-
-    for (pos = 0; pos < len; pos++)
-    {
-        crc ^= (uint16_t)buf[pos];          // XOR byte into least sig. byte of crc
-
-        for (i = 8; i != 0; i--)
-        {    // Loop over each bit
-            if ((crc & 0x0001) != 0)
-            {      // If the LSB is set
-                crc >>= 1;                    // Shift right and XOR 0xA001
-                crc ^= 0xA001;
-            }
-            else                            // Else LSB is not set
-            {
-                crc >>= 1;                    // Just shift right
-            }
-        }
-    }
+    //use TivaWare CRC calculation
+    crc = ROM_Crc16(crc, buf, len);
 
     // Note, this number has low and high bytes swapped, so swap bytes
     return (crc >> 8) + (crc << 8);
 }
 
-// Write a single holding register over DSI
+
 int ModWriteSingle(unsigned char node, uint16_t address, uint16_t value)
 {
     unsigned char uc_MessageBuffer[] = {node, 0x06, 0, 0, 0, 0, 0, 0};
+    static int check_counter = 0;
     uint16_t crc = 0;
     int i;
 
@@ -213,9 +248,141 @@ int ModWriteSingle(unsigned char node, uint16_t address, uint16_t value)
         uc_MessageBuffer[5] = value & 0xFF;
 
         //Calculate and split crc
+        crc = ROM_Crc16( 0xFFFF, uc_MessageBuffer, 6);
+        //crc is byte swapped
+        uc_MessageBuffer[6] = crc & 0xFF;
+        uc_MessageBuffer[7] = crc >> 8;
+
+        //Clear the Rx FIFO
+        while (UARTCharsAvail(SPINDLE_UART_BASE))UARTCharGet(SPINDLE_UART_BASE);
+
+        //Assert control of the line
+        GPIOPinWrite(SPINDLE_RTS_BASE, SPINDLE_RTS_PIN, SPINDLE_RTS_PIN);
+        for(i = 0; i < 8; i++)
+        {
+            UARTCharPut(SPINDLE_UART_BASE, uc_MessageBuffer[i]);
+        }
+        check_counter = 0;
+    }
+    else
+    {
+        if(!UARTBusy(SPINDLE_UART_BASE))
+        {
+            GPIOPinWrite(SPINDLE_RTS_BASE, SPINDLE_RTS_PIN, 0);
+
+            //look for response
+            while(UARTCharsAvail(SPINDLE_UART_BASE))
+            {
+                UARTCharGet(SPINDLE_UART_BASE);
+                check_counter++;
+
+                if(check_counter >= 8)
+                {
+                    write_started = false;
+                    return 1;
+                }
+            }
+        }
+    }
+
+    return -1; //only one good exit path
+}
+
+
+// Write a single holding register over DSI
+// Blocks until confirmation is recieved (10x8 + 38 + 10x7 = 188 bits @ 9600 = 20ms)
+int ModWriteSingleBlocking(unsigned char node, uint16_t address, uint16_t value)
+{
+    unsigned char uc_MessageBuffer[] = {node, 0x06, 0, 0, 0, 0, 0, 0};
+    unsigned char uc_ResponseBuffer[] = {0,0,0,0, 0,0,0,0};
+    uint16_t crc = 0;
+    uint32_t timeout;
+    int i;
+
+    //Split address
+    uc_MessageBuffer[2] = address >> 8;
+    uc_MessageBuffer[3] = address & 0xFF;
+
+    //Split Data
+    uc_MessageBuffer[4] = value >> 8;
+    uc_MessageBuffer[5] = value & 0xFF;
+
+    //Calculate and split crc
+    crc = ROM_Crc16( 0xFFFF, uc_MessageBuffer, 6);
+    //crc is byte swapped
+    uc_MessageBuffer[6] = crc & 0xFF;
+    uc_MessageBuffer[7] = crc >> 8;
+
+    //Clear the Rx FIFO
+    while (UARTCharsAvail(SPINDLE_UART_BASE))UARTCharGet(SPINDLE_UART_BASE);
+
+    //Assert control of the line
+    GPIOPinWrite(SPINDLE_RTS_BASE, SPINDLE_RTS_PIN, SPINDLE_RTS_PIN);
+    for(i = 0; i < 8; i++)
+    {
+        UARTCharPut(SPINDLE_UART_BASE, uc_MessageBuffer[i]);
+    }
+    //wait for transmission to complete
+    while(UARTBusy(SPINDLE_UART_BASE))
+    {
+        ;
+    }
+    GPIOPinWrite(SPINDLE_RTS_BASE, SPINDLE_RTS_PIN, 0);
+
+    //read back the confirmation
+    timeout = spindle_comm_time + 2;
+    i = 0;
+    while((i < 8) && (timeout > spindle_comm_time))
+    {
+        if(UARTCharsAvail(SPINDLE_UART_BASE))
+        {
+            uc_ResponseBuffer[i] = UARTCharGet(SPINDLE_UART_BASE);
+            i++;
+            if(i == 1)
+            {
+                if(uc_ResponseBuffer[0] != node)
+                {
+                    i = 0;
+                }
+            }
+        }
+    }
+
+    return ( uc_ResponseBuffer[4] << 8 ) + uc_ResponseBuffer[5];
+
+}
+
+
+// Write a single holding register over DSI
+// TODO: update to match write function
+int ModReadSingle(unsigned char node, uint16_t address)
+{
+    //Command format is Node|Function|Count Hi|Count Lo|CRC hi|CRC lo
+    unsigned char uc_MessageBuffer[] = {node, 0x03, 0, 0, 0, 1, 0, 0};
+    //Response format is Node|Function|Byte Count|Value Hi|Value Lo|CRC hi|CRC lo
+    static unsigned char uc_ResponseBuffer[] = {0,0,0,0, 0,0,0,0};
+    static uint16_t crc = 0;
+    static int i;
+
+
+    if(!read_started && !UARTBusy(SPINDLE_UART_BASE))
+    {
+        read_started = true;
+        //Split address
+        uc_MessageBuffer[2] = address >> 8;
+        uc_MessageBuffer[3] = address & 0xFF;
+
+        //Split Data (register count)
+        uc_MessageBuffer[4] = 0;
+        uc_MessageBuffer[5] = 1;
+
+        //Calculate and split crc
         crc = ModRTU_CRC(uc_MessageBuffer, 6);
         uc_MessageBuffer[6] = crc >> 8;
         uc_MessageBuffer[7] = crc & 0xFF;
+
+        //Clear the Rx FIFO
+        while (UARTCharsAvail(SPINDLE_UART_BASE))UARTCharGet(SPINDLE_UART_BASE);
 
         //Assert control of the line
         GPIOPinWrite(SPINDLE_RTS_BASE, SPINDLE_RTS_PIN, SPINDLE_RTS_PIN);
@@ -226,31 +393,41 @@ int ModWriteSingle(unsigned char node, uint16_t address, uint16_t value)
             UARTCharPut(UART5_BASE, uc_MessageBuffer[i]);
         }
 
-        //reset readback status
-        readback_started = false;
-        //Return signal -1 : Not complete
-        return -1;
+        crc = 0xFFFF; //Initial value for readback;
+        i = 0; //reset for readback
     }
     else
     {
         //after transmission completes, drop RTS
-        if(UARTBusy(SPINDLE_UART_BASE))
-        {
-            //Return signal -1 : Not complete
-            return -1;
-        }
-        else
+        if(!UARTBusy(SPINDLE_UART_BASE))
         {
             GPIOPinWrite(SPINDLE_RTS_BASE, SPINDLE_RTS_PIN, 0);
-            //Return signal 1 : Transmission complete
-            return 1;
+
+            while(UARTCharsAvail(SPINDLE_UART_BASE))
+            {
+                uc_ResponseBuffer[i] = UARTCharGet(SPINDLE_UART_BASE);
+                if(uc_ResponseBuffer[0] == node)
+                {
+                    crc = ROM_Crc16(crc, (uc_ResponseBuffer + i), 1);
+                    i++;
+                    if(crc == 0)//response checks good and complete
+                    {
+                        read_started = false; //reset for next
+                        //return value
+                        return (uc_ResponseBuffer[3] << 8) + uc_ResponseBuffer[4];
+                    }
+                }
+            }
+
         }
     }
+    return -1;
 }
+
 
 // Write a single holding register over DSI
 // TODO: update to match write function
-int ModReadSingle(unsigned char node, uint16_t address)
+int ModReadSingleBlocking(unsigned char node, uint16_t address)
 {
     unsigned char uc_MessageBuffer[] = {node, 0x03, 0, 0, 0, 1, 0, 0};
     uint16_t crc = 0;
@@ -302,43 +479,6 @@ int ModReadSingle(unsigned char node, uint16_t address)
             return 1;
         }
     }
-}
-
-// Parse single 16bit response
-// TODO: , allow for RX over multiple calls and assembly once complete
-int ModReadbackSingle(unsigned char node)
-{
-    //read back the confirmation
-    //Response format is Node|Function|Byte Count|Value Hi|Value Lo|CRC hi|CRC lo
-    if(!readback_started)
-    {
-        read_buffer_position = 0;
-        read_buffer[0] = 0;
-        read_buffer[1] = 0;
-        readback_started = true;
-    }
-    else
-    {
-        if(UARTCharsAvail(SPINDLE_UART_BASE))
-        {
-            read_buffer[read_buffer_position] = UARTCharGet(SPINDLE_UART_BASE);
-            read_buffer_position++;
-            if((read_buffer_position == 1) && (read_buffer[0] != node)) read_buffer_position = 0;
-        }
-
-        if((read_buffer[1] == 0x03) && (read_buffer_position >= 7))
-        {
-            readback_started = false;
-            return (read_buffer[4] << 8) + read_buffer[5];
-        }
-
-        if((read_buffer[1] == 0x06) && (read_buffer_position >= 8))
-        {
-            readback_started = false;
-            return (read_buffer[4] << 8) + read_buffer[5];
-        }
-    }
-    return -1;
 }
 
 
@@ -431,9 +571,32 @@ void spindle_stop()
 #ifdef VARIABLE_SPINDLE
   void spindle_sync(int state, float rpm)
   {
+      float spindle_hz100_cmd = spindle_compute_hz_value(rpm);
     if (sys.state == STATE_CHECK_MODE) { return; }
     protocol_buffer_synchronize(); // Empty planner buffer to ensure spindle is set when programmed.
     spindle_set_state(state,rpm);
+
+    //TODO: There is something going wrong here need to figure out what.
+    //Possible that this command needs to be removed and we just wait for the write to happen.
+    //IDEA: start commneting stuff out until it works.
+    ModWriteSingleBlocking(SPINDLE_MODBUS_NODE, MODBUS_ADDR_SETPOINT, spindle_compute_hz_value(rpm));
+    while( (hz_x_100_feedback > 1.05 * spindle_compute_hz_value(rpm)) || (hz_x_100_feedback < 0.95 * spindle_compute_hz_value(rpm)) )
+    {
+        ;
+    }
+    //TODO: Add feedback check to ensure that spindle completes ramping to set speed.
+    //Okay to block because this is after the synchronize call. (synchronize waits for all previous g-code blocks to finish)
+    //Call should be something like: spindle_speed_sync( float rpm, float difference);
+    //will return when the feedback is within +/- difference
+    //TODO: create callback routines for DSI UART to allow for byte-by-byte reading of response
+    //calculate crc with each byte (much better than doing it all at the end)
+    //will need simple linear buffer for reading back commands, and partial crc
+    //A write will write the modbus command (entire thing should always fit in FIFO)
+    //It will then set up the rx interrupt to call a rx processor
+    //rx will read byte-by-byte (possibly 2 or more) and keep track of:
+    //- node address matches
+    //- length of response
+    //- write back of data (limited set of commands: write command, write speed, write all, read status, read speed, read error, read all)
   }
 #else
   void _spindle_sync(int state)
