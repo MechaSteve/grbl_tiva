@@ -576,13 +576,12 @@ void spindle_stop()
     protocol_buffer_synchronize(); // Empty planner buffer to ensure spindle is set when programmed.
     spindle_set_state(state,rpm);
 
-    //TODO: There is something going wrong here need to figure out what.
-    //Possible that this command needs to be removed and we just wait for the write to happen.
-    //IDEA: start commneting stuff out until it works.
+
+    //force an immediate write to the modbus drive (this may cause any commands in progress to fail, improve by checking for write/readback in progress)
     ModWriteSingleBlocking(SPINDLE_MODBUS_NODE, MODBUS_ADDR_SETPOINT, spindle_compute_hz_value(rpm));
     while( (hz_x_100_feedback > 1.05 * spindle_compute_hz_value(rpm)) || (hz_x_100_feedback < 0.95 * spindle_compute_hz_value(rpm)) )
     {
-        ;
+        protocol_execute_realtime();
     }
     //TODO: Add feedback check to ensure that spindle completes ramping to set speed.
     //Okay to block because this is after the synchronize call. (synchronize waits for all previous g-code blocks to finish)
