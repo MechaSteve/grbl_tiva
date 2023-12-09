@@ -57,19 +57,21 @@ void InputCycleStartInit(void)
 // Read pin states
 bool InputResetRead(void)
 {
-	return GPIOPinRead(OPERATOR_RESET_BASE, OPERATOR_RESET_PIN) != 0;
+	// return GPIOPinRead(OPERATOR_RESET_BASE, OPERATOR_RESET_PIN) == 0;
+	return false;
 }
 
 bool InputFeedHoldRead(void)
 {
-	return GPIOPinRead(OPERATOR_FEED_HOLD_BASE, OPERATOR_FEED_HOLD_PIN) != 0;
+	// return GPIOPinRead(OPERATOR_FEED_HOLD_BASE, OPERATOR_FEED_HOLD_PIN) == 0;
+	return false;
 }
 
 bool InputCycleStartRead(void)
 {
     // NOT IMPLEMENTED
     //
-    //return GPIOPinRead(OPERATOR_CYCLE_START_BASE, OPERATOR_CYCLE_START_PIN) != 0;
+    //return GPIOPinRead(OPERATOR_CYCLE_START_BASE, OPERATOR_CYCLE_START_PIN) == 0;
     return false;
 }
 

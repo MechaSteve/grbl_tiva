@@ -32,85 +32,209 @@
   #define HOMING_AXIS_LOCATE_SCALAR  5.0 // Must be > 1 to ensure limit switch is cleared.
 #endif
 
+
 void limits_init()
 {
 	x_positive_limit_init();
-    x_negative_limit_init();
-    y_positive_limit_init();
-    y_negative_limit_init();
-    z_positive_limit_init();
-    z_negative_limit_init();
+  x_negative_limit_init();
+  y_positive_limit_init();
+  y_negative_limit_init();
+  z_positive_limit_init();
+  z_negative_limit_init();
 
 	if (bit_istrue(settings.flags,BITFLAG_HARD_LIMIT_ENABLE))
 	{
-	    limits_enable();
+    limits_enable();
 	}
 	else
 	{
-	    limits_disable();
+    limits_disable();
 	}
 
 	//NOT IMPLEMENTED
 #ifdef ENABLE_SOFTWARE_DEBOUNCE
-    //MCUSR &= ~(1<<WDRF);
-    //WDTCSR |= (1<<WDCE) | (1<<WDE);
-   // WDTCSR = (1<<WDP0); // Set time-out at ~32msec.
+  //MCUSR &= ~(1<<WDRF);
+  //WDTCSR |= (1<<WDCE) | (1<<WDE);
+  // WDTCSR = (1<<WDP0); // Set time-out at ~32msec.
 #endif
 }
 
 
 void x_positive_limit_init()
 {
-    SysCtlPeripheralEnable(X_POSITIVE_LIMIT_PORT);
-    GPIODirModeSet(X_POSITIVE_LIMIT_BASE, X_POSITIVE_LIMIT_PIN, GPIO_DIR_MODE_IN);
+  SysCtlPeripheralEnable(X_POSITIVE_LIMIT_PORT);
+  GPIODirModeSet(X_POSITIVE_LIMIT_BASE, X_POSITIVE_LIMIT_PIN, GPIO_DIR_MODE_IN);
+#ifdef DISABLE_LIMIT_PIN_PULL_UP
+	// Weak pull-down for normal low operation. Pin is 0 state unless pulled high.
+  // Weak pull-down should be 13k or greater, but may be as low as 10k ohm
+	GPIOPadConfigSet(X_POSITIVE_LIMIT_BASE, X_POSITIVE_LIMIT_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPD);
+#else
+	// Enable internal pull-up resistors. Normal high operation.
+	GPIOPadConfigSet(X_POSITIVE_LIMIT_BASE, X_POSITIVE_LIMIT_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+#endif
 }
 
 
 void x_negative_limit_init()
 {
-    SysCtlPeripheralEnable(X_NEGATIVE_LIMIT_PORT);
-    GPIODirModeSet(X_NEGATIVE_LIMIT_BASE, X_NEGATIVE_LIMIT_PIN, GPIO_DIR_MODE_IN);
+  SysCtlPeripheralEnable(X_NEGATIVE_LIMIT_PORT);
+  GPIODirModeSet(X_NEGATIVE_LIMIT_BASE, X_NEGATIVE_LIMIT_PIN, GPIO_DIR_MODE_IN);
+#ifdef DISABLE_LIMIT_PIN_PULL_UP
+	// Weak pull-down for normal low operation. Pin is 0 state unless pulled high.
+	GPIOPadConfigSet(X_NEGATIVE_LIMIT_BASE, X_NEGATIVE_LIMIT_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPD);
+#else
+	// Enable internal pull-up resistors. Normal high operation.
+	GPIOPadConfigSet(X_NEGATIVE_LIMIT_BASE, X_NEGATIVE_LIMIT_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+#endif
 }
 
 
 void y_positive_limit_init()
 {
-    SysCtlPeripheralEnable(Y_POSITIVE_LIMIT_PORT);
-    GPIODirModeSet(Y_POSITIVE_LIMIT_BASE, Y_POSITIVE_LIMIT_PIN, GPIO_DIR_MODE_IN);
+  SysCtlPeripheralEnable(Y_POSITIVE_LIMIT_PORT);
+  GPIODirModeSet(Y_POSITIVE_LIMIT_BASE, Y_POSITIVE_LIMIT_PIN, GPIO_DIR_MODE_IN);
+#ifdef DISABLE_LIMIT_PIN_PULL_UP
+	// Weak pull-down for normal low operation. Pin is 0 state unless pulled high.
+	GPIOPadConfigSet(Y_POSITIVE_LIMIT_BASE, Y_POSITIVE_LIMIT_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPD);
+#else
+	// Enable internal pull-up resistors. Normal high operation.
+	GPIOPadConfigSet(Y_POSITIVE_LIMIT_BASE, Y_POSITIVE_LIMIT_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+#endif
 }
 
 
 void y_negative_limit_init()
 {
-    SysCtlPeripheralEnable(Y_NEGATIVE_LIMIT_PORT);
-    GPIODirModeSet(Y_NEGATIVE_LIMIT_BASE, Y_NEGATIVE_LIMIT_PIN, GPIO_DIR_MODE_IN);
+  SysCtlPeripheralEnable(Y_NEGATIVE_LIMIT_PORT);
+  GPIODirModeSet(Y_NEGATIVE_LIMIT_BASE, Y_NEGATIVE_LIMIT_PIN, GPIO_DIR_MODE_IN);
+#ifdef DISABLE_LIMIT_PIN_PULL_UP
+	// Weak pull-down for normal low operation. Pin is 0 state unless pulled high.
+	GPIOPadConfigSet(Y_NEGATIVE_LIMIT_BASE, Y_NEGATIVE_LIMIT_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPD);
+#else
+	// Enable internal pull-up resistors. Normal high operation.
+	GPIOPadConfigSet(Y_NEGATIVE_LIMIT_BASE, Y_NEGATIVE_LIMIT_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+#endif
 }
 
 
 void z_positive_limit_init()
 {
-    SysCtlPeripheralEnable(Z_POSITIVE_LIMIT_PORT);
-    GPIODirModeSet(Z_POSITIVE_LIMIT_BASE, Z_POSITIVE_LIMIT_PIN, GPIO_DIR_MODE_IN);
+  SysCtlPeripheralEnable(Z_POSITIVE_LIMIT_PORT);
+  GPIODirModeSet(Z_POSITIVE_LIMIT_BASE, Z_POSITIVE_LIMIT_PIN, GPIO_DIR_MODE_IN);
+#ifdef DISABLE_LIMIT_PIN_PULL_UP
+	// Weak pull-down for normal low operation. Pin is 0 state unless pulled high.
+	GPIOPadConfigSet(Z_POSITIVE_LIMIT_BASE, Z_POSITIVE_LIMIT_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPD);
+#else
+	// Enable internal pull-up resistors. Normal high operation.
+	GPIOPadConfigSet(Z_POSITIVE_LIMIT_BASE, Z_POSITIVE_LIMIT_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+#endif
 }
 
 
 void z_negative_limit_init()
 {
-    SysCtlPeripheralEnable(Z_NEGATIVE_LIMIT_PORT);
-    GPIODirModeSet(Z_NEGATIVE_LIMIT_BASE, Z_NEGATIVE_LIMIT_PIN, GPIO_DIR_MODE_IN);
+  SysCtlPeripheralEnable(Z_NEGATIVE_LIMIT_PORT);
+  GPIODirModeSet(Z_NEGATIVE_LIMIT_BASE, Z_NEGATIVE_LIMIT_PIN, GPIO_DIR_MODE_IN);
+#ifdef DISABLE_LIMIT_PIN_PULL_UP
+	// Weak pull-down for normal low operation. Pin is 0 state unless pulled high.
+	GPIOPadConfigSet(Z_NEGATIVE_LIMIT_BASE, Z_NEGATIVE_LIMIT_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPD);
+#else
+	// Enable internal pull-up resistors. Normal high operation.
+	GPIOPadConfigSet(Z_NEGATIVE_LIMIT_BASE, Z_NEGATIVE_LIMIT_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+#endif
+}
+
+// read the status of the limit interrupts
+bool LimitIntRead()
+{  
+  if( GPIOIntStatus(X_POSITIVE_LIMIT_BASE, X_POSITIVE_LIMIT_PIN))  return true;
+  if( GPIOIntStatus(X_NEGATIVE_LIMIT_BASE, X_NEGATIVE_LIMIT_PIN))  return true;
+
+  if( GPIOIntStatus(Y_POSITIVE_LIMIT_BASE, Y_POSITIVE_LIMIT_PIN))  return true;
+  if( GPIOIntStatus(Y_NEGATIVE_LIMIT_BASE, Y_NEGATIVE_LIMIT_PIN))  return true;
+
+  if( GPIOIntStatus(Z_POSITIVE_LIMIT_BASE, Z_POSITIVE_LIMIT_PIN))  return true;
+  if( GPIOIntStatus(Z_NEGATIVE_LIMIT_BASE, Z_NEGATIVE_LIMIT_PIN))  return true;
+  return false;
+}
+
+// reset the limit interrupts
+void LimitIntClear()
+{
+  GPIOIntClear(X_POSITIVE_LIMIT_BASE, X_POSITIVE_LIMIT_PIN);
+  GPIOIntClear(X_NEGATIVE_LIMIT_BASE, X_NEGATIVE_LIMIT_PIN);
+  
+  GPIOIntClear(Y_POSITIVE_LIMIT_BASE, Y_POSITIVE_LIMIT_PIN);
+  GPIOIntClear(Y_NEGATIVE_LIMIT_BASE, Y_NEGATIVE_LIMIT_PIN);
+  
+  GPIOIntClear(Z_POSITIVE_LIMIT_BASE, Z_POSITIVE_LIMIT_PIN);
+  GPIOIntClear(Z_NEGATIVE_LIMIT_BASE, Z_NEGATIVE_LIMIT_PIN);
 }
 
 
 // Enables hard limits.
 void limits_enable()
 {
-    // Not Implemented
+  // The hard limit fuction is implemented using the pin change interrupt
+
+  // Configure the type of interrupt, Falling for normally high, rising for normally low
+  if(bit_istrue(settings.flags,BITFLAG_INVERT_LIMIT_PINS))//Pin low is limits OK
+  {
+    GPIOIntTypeSet(X_POSITIVE_LIMIT_BASE, X_POSITIVE_LIMIT_PIN, GPIO_RISING_EDGE);
+    GPIOIntTypeSet(X_NEGATIVE_LIMIT_BASE, X_NEGATIVE_LIMIT_PIN, GPIO_RISING_EDGE);
+    
+    GPIOIntTypeSet(Y_POSITIVE_LIMIT_BASE, Y_POSITIVE_LIMIT_PIN, GPIO_RISING_EDGE);
+    GPIOIntTypeSet(Y_NEGATIVE_LIMIT_BASE, Y_NEGATIVE_LIMIT_PIN, GPIO_RISING_EDGE);
+    
+    GPIOIntTypeSet(Z_POSITIVE_LIMIT_BASE, Z_POSITIVE_LIMIT_PIN, GPIO_RISING_EDGE);
+    GPIOIntTypeSet(Z_NEGATIVE_LIMIT_BASE, Z_NEGATIVE_LIMIT_PIN, GPIO_RISING_EDGE);
+  }
+  else
+  {
+    GPIOIntTypeSet(X_POSITIVE_LIMIT_BASE, X_POSITIVE_LIMIT_PIN, GPIO_FALLING_EDGE);
+    GPIOIntTypeSet(X_NEGATIVE_LIMIT_BASE, X_NEGATIVE_LIMIT_PIN, GPIO_FALLING_EDGE);
+    
+    GPIOIntTypeSet(Y_POSITIVE_LIMIT_BASE, Y_POSITIVE_LIMIT_PIN, GPIO_FALLING_EDGE);
+    GPIOIntTypeSet(Y_NEGATIVE_LIMIT_BASE, Y_NEGATIVE_LIMIT_PIN, GPIO_FALLING_EDGE);
+    
+    GPIOIntTypeSet(Z_POSITIVE_LIMIT_BASE, Z_POSITIVE_LIMIT_PIN, GPIO_FALLING_EDGE);
+    GPIOIntTypeSet(Z_NEGATIVE_LIMIT_BASE, Z_NEGATIVE_LIMIT_PIN, GPIO_FALLING_EDGE);
+  }
+  // Enable the individual interrupt pins at the port configuration
+  GPIOIntEnable(X_POSITIVE_LIMIT_BASE, X_POSITIVE_LIMIT_PIN);
+  GPIOIntEnable(X_NEGATIVE_LIMIT_BASE, X_NEGATIVE_LIMIT_PIN);
+  
+  GPIOIntEnable(Y_POSITIVE_LIMIT_BASE, Y_POSITIVE_LIMIT_PIN);
+  GPIOIntEnable(Y_NEGATIVE_LIMIT_BASE, Y_NEGATIVE_LIMIT_PIN);
+  
+  GPIOIntEnable(Z_POSITIVE_LIMIT_BASE, Z_POSITIVE_LIMIT_PIN);
+  GPIOIntEnable(Z_NEGATIVE_LIMIT_BASE, Z_NEGATIVE_LIMIT_PIN);
+    
+  // Enable the GPIO interrupts at the interrupt controller
+  // NOTE: these will NOT be disabled, ever. only the individual pins
+  IntEnable(X_POSITIVE_LIMIT_INT);
+  IntEnable(X_NEGATIVE_LIMIT_INT);
+
+  IntEnable(Y_POSITIVE_LIMIT_INT);
+  IntEnable(Y_NEGATIVE_LIMIT_INT);
+
+  IntEnable(Z_POSITIVE_LIMIT_INT);
+  IntEnable(Z_NEGATIVE_LIMIT_INT);
 }
 
 // Disables hard limits.
 void limits_disable()
 {
-	// Not Implemented
+  // Disable the limit interrupt pins, but leave the port interrupts for tool setter, probe, and safety.
+  // Enable the individual interrupt pins at the port configuration
+  GPIOIntDisable(X_POSITIVE_LIMIT_BASE, X_POSITIVE_LIMIT_PIN);
+  GPIOIntDisable(X_NEGATIVE_LIMIT_BASE, X_NEGATIVE_LIMIT_PIN);
+  
+  GPIOIntDisable(Y_POSITIVE_LIMIT_BASE, Y_POSITIVE_LIMIT_PIN);
+  GPIOIntDisable(Y_NEGATIVE_LIMIT_BASE, Y_NEGATIVE_LIMIT_PIN);
+  
+  GPIOIntDisable(Z_POSITIVE_LIMIT_BASE, Z_POSITIVE_LIMIT_PIN);
+  GPIOIntDisable(Z_NEGATIVE_LIMIT_BASE, Z_NEGATIVE_LIMIT_PIN);
 }
 
 
@@ -136,74 +260,76 @@ int limits_get_state()
 
 bool x_positive_limit_get()
 {
-    if(bit_istrue(settings.flags,BITFLAG_INVERT_LIMIT_PINS))//Pin high is limits OK
-    {
-        return GPIOPinRead(X_POSITIVE_LIMIT_BASE, X_POSITIVE_LIMIT_PIN) == 0;
-    }
-    else//Pin low is limits OK
-    {
-        return GPIOPinRead(X_POSITIVE_LIMIT_BASE, X_POSITIVE_LIMIT_PIN) != 0;
-    }
+  if(bit_istrue(settings.flags,BITFLAG_INVERT_LIMIT_PINS))//Pin low is limits OK
+  {
+    // IF: limit pin is high, then an inverted limit is triggered
+    return GPIOPinRead(X_POSITIVE_LIMIT_BASE, X_POSITIVE_LIMIT_PIN) != 0;
+  }
+  else//Pin high is limits OK, DEFAULT BEHAVIOR
+  {
+    // IF: limit pin is low, then a non-inverted limit is triggered
+    return GPIOPinRead(X_POSITIVE_LIMIT_BASE, X_POSITIVE_LIMIT_PIN) == 0;
+  }
 }
 
 bool x_negative_limit_get()
 {
-    if(bit_istrue(settings.flags,BITFLAG_INVERT_LIMIT_PINS))//Pin high is limits OK
-    {
-        return GPIOPinRead(X_NEGATIVE_LIMIT_BASE, X_NEGATIVE_LIMIT_PIN) == 0;
-    }
-    else//Pin low is limits OK
-    {
-        return GPIOPinRead(X_NEGATIVE_LIMIT_BASE, X_NEGATIVE_LIMIT_PIN) != 0;
-    }
+  if(bit_istrue(settings.flags,BITFLAG_INVERT_LIMIT_PINS))//Pin low is limits OK
+  {
+    return GPIOPinRead(X_NEGATIVE_LIMIT_BASE, X_NEGATIVE_LIMIT_PIN) != 0;
+  }
+  else//Pin high is limits OK
+  {
+    return GPIOPinRead(X_NEGATIVE_LIMIT_BASE, X_NEGATIVE_LIMIT_PIN) == 0;
+  }
 }
 
 bool y_positive_limit_get()
 {
-    if(bit_istrue(settings.flags,BITFLAG_INVERT_LIMIT_PINS))//Pin high is limits OK
-    {
-        return GPIOPinRead(Y_POSITIVE_LIMIT_BASE, Y_POSITIVE_LIMIT_PIN) == 0;
-    }
-    else//Pin low is limits OK
-    {
-        return GPIOPinRead(Y_POSITIVE_LIMIT_BASE, Y_POSITIVE_LIMIT_PIN) != 0;
-    }
+  if(bit_istrue(settings.flags,BITFLAG_INVERT_LIMIT_PINS))//Pin low is limits OK
+  {
+    return GPIOPinRead(Y_POSITIVE_LIMIT_BASE, Y_POSITIVE_LIMIT_PIN) != 0;
+  }
+  else//Pin high is limits OK
+  {
+    return GPIOPinRead(Y_POSITIVE_LIMIT_BASE, Y_POSITIVE_LIMIT_PIN) == 0;
+  }
 }
 
 bool y_negative_limit_get()
 {
-    if(bit_istrue(settings.flags,BITFLAG_INVERT_LIMIT_PINS))//Pin high is limits OK
-    {
-        return GPIOPinRead(Y_NEGATIVE_LIMIT_BASE, Y_NEGATIVE_LIMIT_PIN) == 0;
-    }
-    else//Pin low is limits OK
-    {
-        return GPIOPinRead(Y_NEGATIVE_LIMIT_BASE, Y_NEGATIVE_LIMIT_PIN) != 0;
-    }
+  if(bit_istrue(settings.flags,BITFLAG_INVERT_LIMIT_PINS))//Pin low is limits OK
+  {
+    return GPIOPinRead(Y_NEGATIVE_LIMIT_BASE, Y_NEGATIVE_LIMIT_PIN) != 0;
+  }
+  else//Pin high is limits OK
+  {
+    return GPIOPinRead(Y_NEGATIVE_LIMIT_BASE, Y_NEGATIVE_LIMIT_PIN) == 0;
+  }
 }
 
 bool z_positive_limit_get()
 {
-    if(bit_istrue(settings.flags,BITFLAG_INVERT_LIMIT_PINS))//Pin high is limits OK
-    {
-        return GPIOPinRead(Z_POSITIVE_LIMIT_BASE, Z_POSITIVE_LIMIT_PIN) == 0;
-    }
-    else//Pin low is limits OK
-    {
-        return GPIOPinRead(Z_POSITIVE_LIMIT_BASE, Z_POSITIVE_LIMIT_PIN) != 0;
-    }
+  if(bit_istrue(settings.flags,BITFLAG_INVERT_LIMIT_PINS))//Pin low is limits OK
+  {
+    return GPIOPinRead(Z_POSITIVE_LIMIT_BASE, Z_POSITIVE_LIMIT_PIN) != 0;
+  }
+  else//Pin high is limits OK
+  {
+    return GPIOPinRead(Z_POSITIVE_LIMIT_BASE, Z_POSITIVE_LIMIT_PIN) == 0;
+  }
 }
 
 bool z_negative_limit_get()
 {
-    if(bit_istrue(settings.flags,BITFLAG_INVERT_LIMIT_PINS))//Pin high is limits OK
-    {
-        return GPIOPinRead(Z_NEGATIVE_LIMIT_BASE, Z_NEGATIVE_LIMIT_PIN) == 0;
-    }
-    else//Pin low is limits OK
-    {
-        return GPIOPinRead(Z_NEGATIVE_LIMIT_BASE, Z_NEGATIVE_LIMIT_PIN) != 0;
-    }
+  if(bit_istrue(settings.flags,BITFLAG_INVERT_LIMIT_PINS))//Pin low is limits OK
+  {
+    return GPIOPinRead(Z_NEGATIVE_LIMIT_BASE, Z_NEGATIVE_LIMIT_PIN) != 0;
+  }
+  else//Pin high is limits OK
+  {
+    return GPIOPinRead(Z_NEGATIVE_LIMIT_BASE, Z_NEGATIVE_LIMIT_PIN) == 0;
+  }
 }
 
 
@@ -267,7 +393,15 @@ void OnLimitEvent(void)
 // mask, which prevents the stepper algorithm from executing step pulses. Homing motions typically
 // circumvent the processes for executing motions in normal operation.
 // NOTE: Only the abort realtime command can interrupt this process.
+//
 // TODO: Move limit pin-specific calls to a general function for portability.
+//
+// TODO: Theoretically, there should be no reson for homing to work differently than probing
+// The only requirement is that over-travel at high-speed seeking not exceed the distance between
+// Hard limits and hard stops
+//
+// TODO: provide option for hard stop homing (sounds bad, but works fine if axis cannot jam)
+//
 void limits_go_home(uint8_t cycle_mask)
 {
   if (sys.abort) { return; } // Block if system reset has been issued.
@@ -341,6 +475,7 @@ void limits_go_home(uint8_t cycle_mask)
           else { target[idx] = -max_travel; }
         }
         // Apply axislock to the step port pins active in this cycle.
+        // BIT TRUE = Axis is allowed to move
         axislock |= step_pin[idx];
       }
 
@@ -358,6 +493,7 @@ void limits_go_home(uint8_t cycle_mask)
     do {
       if (approach) {
         // Check limit state. Lock out cycle axes when they change.
+        // TODO: This could perhaps be simplified to axislock &= ~limits_get_state() & AXIS_MASK;?
         limit_state = limits_get_state();
         for (idx=0; idx<N_AXIS; idx++) {
           if (axislock & step_pin[idx]) {
@@ -366,6 +502,7 @@ void limits_go_home(uint8_t cycle_mask)
                 if (idx==Z_AXIS) { axislock &= ~(step_pin[Z_AXIS]); }
                 else { axislock &= ~(step_pin[A_MOTOR]|step_pin[B_MOTOR]); }
               #else
+                // Clear the bit to lock the axis
                 axislock &= ~(step_pin[idx]);
               #endif
             }
@@ -398,7 +535,7 @@ void limits_go_home(uint8_t cycle_mask)
         }
       }
 
-    } while (AXIS_MASK & axislock);
+    } while (axislock);
 
     st_reset(); // Immediately force kill steppers and reset step segment buffer.
     delay_ms(settings.homing_debounce_delay); // Delay to allow transient dynamics to dissipate.

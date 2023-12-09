@@ -39,7 +39,7 @@
 #define Y_AXIS_MASK		2
 #define Z_AXIS_MASK		4
 //#define A_AXIS_MASK		8
-#define AXIS_MASK   X_AXIS_MASK|Y_AXIS_MASK|Z_AXIS_MASK
+#define AXIS_MASK   (X_AXIS_MASK|Y_AXIS_MASK|Z_AXIS_MASK)
 
 // CoreXY motor assignments. DO NOT ALTER.
 // NOTE: If the A and B motor axis bindings are changed, this effects the CoreXY equations.

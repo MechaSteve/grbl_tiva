@@ -7,6 +7,7 @@
 
 #include "grbl.h"
 #include "driverlib/uart.h"
+#include "limits.h"
 
 //Global debug flags
 bool debug_step_started = false;
@@ -80,34 +81,31 @@ void UART0IntHandler(void)
 //
 void GPIOIntHandler(void)
 {
-	long limitStatus = 0;
-	//long probeStatus = (PROBE_PIN & GPIOPinIntStatus(PROBE_BASE, true));
 
-	//if(PROBE_PIN & GPIOPinIntStatus(PROBE_BASE, true))
+	if(LimitIntRead()) //Limit Switch Triggered
+	{
+		LimitIntClear();
+		OnLimitEvent();
+	}
+	// Probe is not an interrupt, it is polled by the stepper ISR
 
+	if(InputResetIntRead())
+	{
+		InputResetIntClear();
+		OnOperatorResetEvent();
+	}
 
-        if(limitStatus != 0) //Limit Switch Triggered
-        {
-            OnLimitEvent();
-        }
+	if(InputFeedHoldIntRead())
+	{
+		InputFeedHoldIntClear();
+		OnOperatorFeedHoldEvent();
+	}
 
-        if(InputResetIntRead())
-        {
-            InputResetIntClear();
-            OnOperatorResetEvent();
-        }
-
-        if(InputFeedHoldIntRead())
-        {
-            InputFeedHoldIntClear();
-            OnOperatorFeedHoldEvent();
-        }
-
-        if(InputCycleStartIntRead())
-        {
-            InputCycleStartIntClear();
-            OnOperatorCycleStartEvent();
-        }
+	if(InputCycleStartIntRead())
+	{
+		InputCycleStartIntClear();
+		OnOperatorCycleStartEvent();
+	}
 
 
 }

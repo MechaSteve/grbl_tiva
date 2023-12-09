@@ -209,25 +209,33 @@ void st_wake_up()
 	// Enable stepper drivers.
 	AxisMasterEnable();
 
-	// Initialize stepper output bits to ensure first ISR call does not step.
-	st.step_outbits = step_port_invert_mask;
-
-	// Initialize step pulse timing from settings. Here to ensure updating after re-writing.
-#ifdef STEP_PULSE_DELAY
-	// Set total step pulse time after direction pin set. Ad hoc computation from oscilloscope.
-	st.step_pulse_time = -(((settings.pulse_microseconds+STEP_PULSE_DELAY-2)*TICKS_PER_MICROSECOND) >> 3);
-	// Set delay between direction pin write and step command.
-	OCR0A = -(((settings.pulse_microseconds)*TICKS_PER_MICROSECOND) >> 3);
-#else // Normal operation
-	// Set step pulse time. Ad hoc computation from oscilloscope. Uses two's complement.
-	st.step_pulse_time = -(((settings.pulse_microseconds-2)*TICKS_PER_MICROSECOND) >> 3);
-#endif
-
-	// Enable Stepper Driver Interrupt
-	IntEnable(INT_TIMER0A);
-	TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
-	if( (bit_istrue(sys_rt_exec_state, EXEC_CYCLE_START)) || (bit_istrue(sys.state,  STATE_JOG)))
+  // This may be called to power on the steppers without actually starting motion
+  // It's not, but maybe could be, or state may have changed
+	if(sys.state & (STATE_CYCLE | STATE_HOMING | STATE_JOG))
 	{
+    // Initialize stepper output bits to ensure first ISR call does not step.
+    st.step_outbits = step_port_invert_mask;
+    st.dir_outbits = dir_port_invert_mask;
+
+    // Initialize step pulse timing from settings. Here to ensure updating after re-writing.
+    // TODO: FOR TIVA GRBL: I think all of this is dead code. Should be emplimented as a timer match value
+    // Timer timeout: Bit is set to correct pulse level
+    // Timer match: Out put is reset?
+    // May need to switch operation to count up mode? otherwise step occurs at end of time period?
+    // Perhaps that is best?
+    #ifdef STEP_PULSE_DELAY
+      // Set total step pulse time after direction pin set. Ad hoc computation from oscilloscope.
+      st.step_pulse_time = -(((settings.pulse_microseconds+STEP_PULSE_DELAY-2)*TICKS_PER_MICROSECOND) >> 3);
+      // Set delay between direction pin write and step command.
+      OCR0A = -(((settings.pulse_microseconds)*TICKS_PER_MICROSECOND) >> 3);
+    #else // Normal operation
+      // Set step pulse time. Ad hoc computation from oscilloscope. Uses two's complement.
+      st.step_pulse_time = -(((settings.pulse_microseconds-2)*TICKS_PER_MICROSECOND) >> 3);
+    #endif
+
+    // Enable Stepper Driver Interrupt
+    TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+    IntEnable(INT_TIMER0A);
 		// Stepping will start after 1ms
 		TimerLoadSet(TIMER0_BASE, TIMER_A, SysCtlClockGet() / 1000 );
 		TimerEnable(TIMER0_BASE, TIMER_A);
@@ -329,13 +337,15 @@ void OnStepStart(void)
 	//TCNT0 = st.step_pulse_time; // Reload Timer0 counter
 	//TCCR0B = (1<<CS01); // Begin Timer0. Full speed, 1/8 prescaler
 
-	//Set Timer to give 50% duty cycle at 300 kHz
 	//ENHACEMENT: Daisy Chain trigger Timer1 off Timer0
 	TimerDisable(TIMER1_BASE, TIMER_A);
 	TimerConfigure(TIMER1_BASE, TIMER_CFG_ONE_SHOT);
 	IntEnable(INT_TIMER1A);
-    TimerIntEnable(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
-	TimerLoadSet(TIMER1_BASE, TIMER_A, SysCtlClockGet() / 60000);
+	TimerIntEnable(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
+	//Set Timer to give 50% duty cycle at 300 kHz
+  //TODO: I changed this to 30 kHz for some reason.
+  // This may be the casue of a lower than expected max speed
+	TimerLoadSet(TIMER1_BASE, TIMER_A, SysCtlClockGet() / 600000);
 	//TimerLoadSet(TIMER1_BASE, TIMER_A, 240);
 	TimerEnable(TIMER1_BASE, TIMER_A);
 
@@ -565,6 +575,7 @@ void stepper_init()
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER1);
 	TimerDisable(TIMER1_BASE, TIMER_A);
 	TimerConfigure(TIMER1_BASE, TIMER_CFG_ONE_SHOT);
+  // Hard coded for 50% duty cycle at 300 kHz
 	TimerLoadSet(TIMER1_BASE, TIMER_A, SysCtlClockGet() / 600000);
     TimerIntEnable(TIMER1_BASE, TIMER_TIMA_TIMEOUT);
 

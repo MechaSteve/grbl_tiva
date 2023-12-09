@@ -576,12 +576,27 @@ void spindle_stop()
     protocol_buffer_synchronize(); // Empty planner buffer to ensure spindle is set when programmed.
     spindle_set_state(state,rpm);
 
-    //force an immediate write to the modbus drive (this may cause any commands in progress to fail, improve by checking for write/readback in progress)
+    //TODO: There is something going wrong here need to figure out what.
+    //Possible that this command needs to be removed and we just wait for the write to happen.
+    //IDEA: start commneting stuff out until it works.
     ModWriteSingleBlocking(SPINDLE_MODBUS_NODE, MODBUS_ADDR_SETPOINT, spindle_compute_hz_value(rpm));
     while( (hz_x_100_feedback > 1.05 * spindle_compute_hz_value(rpm)) || (hz_x_100_feedback < 0.95 * spindle_compute_hz_value(rpm)) )
     {
         protocol_execute_realtime();
     }
+    //TODO: Add feedback check to ensure that spindle completes ramping to set speed.
+    //Okay to block because this is after the synchronize call. (synchronize waits for all previous g-code blocks to finish)
+    //Call should be something like: spindle_speed_sync( float rpm, float difference);
+    //will return when the feedback is within +/- difference
+    //TODO: create callback routines for DSI UART to allow for byte-by-byte reading of response
+    //calculate crc with each byte (much better than doing it all at the end)
+    //will need simple linear buffer for reading back commands, and partial crc
+    //A write will write the modbus command (entire thing should always fit in FIFO)
+    //It will then set up the rx interrupt to call a rx processor
+    //rx will read byte-by-byte (possibly 2 or more) and keep track of:
+    //- node address matches
+    //- length of response
+    //- write back of data (limited set of commands: write command, write speed, write all, read status, read speed, read error, read all)
   }
 #else
   void _spindle_sync(int state)

@@ -32,6 +32,10 @@ void y_negative_limit_init();
 void z_positive_limit_init();
 void z_negative_limit_init();
 
+// read and reset limit interrupt
+bool LimitIntRead();
+void LimitIntClear();
+
 // Enables hard limits.
 void limits_enable();
 
