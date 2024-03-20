@@ -11,7 +11,7 @@ This is posted for two reasons:
 - [x] Fix syntax, add missing includes, refactor with StellarisWare functions. Get programs to compile without error [DONE]
 - [x] Test and bug fix to get at least a single axis working [DONE]
 - [x] Test/Fix Multi-Axis motion
-- [ ] Limit Switches
+- [x] Limit Switches
 - [x] Spindle control
 - [x] Actually running G-Code
 - [ ] Probing
