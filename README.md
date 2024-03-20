@@ -10,10 +10,10 @@ This is posted for two reasons:
 - [x] Branch grbl and import into CCS v6
 - [x] Fix syntax, add missing includes, refactor with StellarisWare functions. Get programs to compile without error [DONE]
 - [x] Test and bug fix to get at least a single axis working [DONE]
-- [ ] Test/Fix Multi-Axis motion
+- [x] Test/Fix Multi-Axis motion
 - [ ] Limit Switches
-- [ ] Spindle control
-- [ ] Actually running G-Code
+- [x] Spindle control
+- [x] Actually running G-Code
 - [ ] Probing
 - [ ] Replace AMASS & Breshem with timer outputs
   * Each axis gets a 32 bit timer
